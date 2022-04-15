@@ -31,6 +31,7 @@ func (session *Session) ChoosePayment() error {
 
 		} else if index == 3 {
 			session.Channel = "20200920"
+			session.SubSaasId = "contract"
 			break
 		} else {
 			fmt.Println("输入有误：序号无效！")

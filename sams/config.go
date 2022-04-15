@@ -26,9 +26,12 @@ type StoreListParam struct {
 var CartAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/getUserCart"
 
 type CartParam struct {
-	StoreList []Store `json:"storeList"`
-	AddressId string  `json:"addressId"`
-	Uid       string  `json:"uid"`
+	StoreList         []Store `json:"storeList"`
+	AddressId         string  `json:"addressId"`
+	Uid               string  `json:"uid"`
+	DeliveryType      string  `json:"deliveryType"`
+	HomePagelongitude string  `json:"homePagelongitude"`
+	HomePagelatitude  string  `json:"homePagelatitude"`
 }
 
 // Payment 支付

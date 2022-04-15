@@ -1,13 +1,10 @@
 package sams
 
 import (
-	"bytes"
+	"SAMS_buyer/conf"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
-	"net/http"
 )
 
 type Goods struct {
@@ -53,7 +50,6 @@ func (session *Session) parseNormalGoods(result gjson.Result) (error, NormalGood
 }
 
 func (session *Session) CheckGoods() error {
-	urlPath := GoodsInfoAPI
 	data := GoodsInfoParam{
 		FloorId: session.FloorId,
 		StoreId: "",
@@ -71,37 +67,18 @@ func (session *Session) CheckGoods() error {
 	}
 	data.GoodsList = goodsList
 	dataStr, _ := json.Marshal(data)
-	req, _ := http.NewRequest("POST", urlPath, bytes.NewReader(dataStr))
-	req.Header = *session.Headers
-
-	resp, err := session.Client.Do(req)
+	err, result := session.Request.POST(GoodsInfoAPI, dataStr)
 	if err != nil {
 		return err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	resp.Body.Close()
-	if resp.StatusCode == 200 {
-		result := gjson.Parse(string(body))
-		switch result.Get("code").Str {
-		case "Success":
-			if result.Get("data.isHasException").Bool() == false {
-				return nil
-			} else {
-				fmt.Printf("\n======== 以下商品已过期 ========\n")
-				for index, v := range result.Get("data.popUpInfo.goodsList").Array() {
-					_, goods := session.parseNormalGoods(v)
-					fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price)
-				}
-				return OOSErr
-			}
-		default:
-			return errors.New(result.Get("msg").Str)
-		}
+	if result.Get("data.isHasException").Bool() == false {
+		return nil
 	} else {
-		return errors.New(fmt.Sprintf("[%v] %s", resp.StatusCode, body))
+		fmt.Printf("\n======== 以下商品已过期 ========\n")
+		for index, v := range result.Get("data.popUpInfo.goodsList").Array() {
+			_, goods := session.parseNormalGoods(v)
+			fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price)
+		}
+		return conf.OOSErr
 	}
 }

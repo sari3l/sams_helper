@@ -3,13 +3,23 @@ package main
 import (
 	"SAMS_buyer/conf"
 	"SAMS_buyer/notice"
+	"SAMS_buyer/requests"
 	"SAMS_buyer/sams"
 	"fmt"
 	"time"
 )
 
 func main() {
+	// 初始化设置
 	err, setting := conf.InitSetting()
+	if err != nil {
+		fmt.Printf("%s", err)
+		return
+	}
+
+	// 初始化 requests
+	request := requests.Request{}
+	err = request.InitRequest(setting)
 	if err != nil {
 		fmt.Printf("%s", err)
 		return
@@ -17,7 +27,7 @@ func main() {
 
 	// 初始化用户信息
 	session := sams.Session{}
-	err = session.InitSession(setting.AuthToken)
+	err = session.InitSession(request, setting)
 
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -25,6 +35,17 @@ func main() {
 	}
 
 	for true {
+	AddressLoop:
+		// 选取收货地址
+		fmt.Println("\n########## 切换购物车收货地址 ##########\n")
+		err = session.ChooseAddress()
+		if err != nil {
+			goto AddressLoop
+		} else {
+			fmt.Println("\n切换成功!")
+			fmt.Printf("%s %s %s %s %s \n", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
+		}
+
 	StoreLoop:
 		// 获取门店
 		err = session.GetStoreList()
@@ -38,6 +59,7 @@ func main() {
 		}
 
 	CartLoop:
+		// 商品列表获取，与地址挂钩
 		fmt.Printf("\n########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		session.CheckCart()
 		for _, v := range session.Cart.FloorInfoList {
@@ -65,71 +87,74 @@ func main() {
 		}
 
 	GoodsLoop:
+		// 商品检查
 		fmt.Printf("\n########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckGoods(); err != nil {
 			fmt.Println(err)
+			time.Sleep(1 * time.Second)
 			switch err {
-			case sams.OOSErr:
+			case conf.OOSErr:
 				goto CartLoop
 			default:
 				goto GoodsLoop
 			}
 		}
 		if err = session.CheckSettleInfo(); err != nil {
-			fmt.Println(err)
+			fmt.Printf("校验商品失败：%s\n", err)
+			time.Sleep(1 * time.Second)
 			switch err {
-			case sams.CartGoodChangeErr:
+			case conf.CartGoodChangeErr:
 				goto CartLoop
-			case sams.LimitedErr:
+			case conf.LimitedErr:
 				goto GoodsLoop
+			case conf.NoMatchDeliverMode:
+				goto AddressLoop
 			default:
 				goto GoodsLoop
 			}
 		}
 
 	CapacityLoop:
+		// 运力获取
 		fmt.Printf("\n########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
 		err = session.CheckCapacity()
 		if err != nil {
 			fmt.Println(err)
 			time.Sleep(1 * time.Second)
-			continue
+			goto CapacityLoop
 		}
 
-		dateISFull := true
-		for _, capCityResponse := range session.Capacity.CapCityResponseList {
-			if capCityResponse.DateISFull == false && dateISFull {
-				dateISFull = false
-				fmt.Printf("发现可用的配送时段:%s!\n", capCityResponse.StrDate)
-			}
-		}
-
-		if dateISFull {
+		if session.SettleDeliveryInfo.ArrivalTimeStr != "" {
+			fmt.Printf("发现可用的配送时段::%s!\n", session.SettleDeliveryInfo.ArrivalTimeStr)
+		} else {
 			fmt.Println("当前无可用配送时间段")
 			time.Sleep(1 * time.Second)
 			goto CapacityLoop
 		}
+
 	OrderLoop:
-		err = session.CommitPay()
+		// 下订单操作
+		err, order := session.CommitPay()
 		fmt.Printf("\n########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
 		switch err {
 		case nil:
-			fmt.Println("抢购成功，请前往app付款！")
+			fmt.Printf("抢购成功，订单号 %s，请前往app付款！", order.OrderNo)
 			err = notice.Do(setting.NoticeSet)
 			if err != nil {
 				fmt.Printf("%s", err)
 			}
 			return
-		case sams.LimitedErr1:
-			fmt.Printf("[%s] 立即重试...\n", err)
+		case conf.LimitedErr1:
+			fmt.Println("立即重试...")
 			goto OrderLoop
-		default:
+		case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
+			goto CapacityLoop
+		case conf.OOSErr:
 			goto CartLoop
+		case conf.StoreHasClosedError:
+			goto StoreLoop
+		default:
+			goto CapacityLoop
 		}
 	}
-
-	// mac sound notice
-	//for _ = range [3]int{} {
-	//	exec.Command("say", "", "--voice=Ting-ting").Run()
-	//}
 }

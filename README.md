@@ -10,6 +10,7 @@
 
 ```yaml
 authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
+deviceType: 1			# 1->移动端模拟，1->小程序模拟
 noticeType: 1			# 0->不通知, 1->bark, 2->mac sound
 barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设置为 Bark 通知 token
 ```
@@ -17,6 +18,7 @@ barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设
 
 ## 更新：
 
+2022年04月16日 添加`小程序模拟`模式，修复逻辑问题
 2022年04月15日 选择地址后自动更新购物车
 2022年04月14日 修正一些函数问题
 

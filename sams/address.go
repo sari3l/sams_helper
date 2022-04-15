@@ -2,13 +2,10 @@ package sams
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
-	"net/http"
 	"os"
 )
 
@@ -50,102 +47,57 @@ func parseAddress(addressData gjson.Result) (error, Address) {
 	return nil, address
 }
 
-func (session *Session) GetAddress() error {
-	urlPath := AddressListAPI
-	req, _ := http.NewRequest("GET", urlPath, nil)
-	req.Header = *session.Headers
-
-	resp, err := session.Client.Do(req)
+func (session *Session) GetAddress() (error, []Address) {
+	err, result := session.Request.GET(AddressListAPI)
 	if err != nil {
-		return err
+		return err, nil
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	resp.Body.Close()
-	if resp.StatusCode == 200 {
-		result := gjson.Parse(string(body))
-		switch result.Get("code").Str {
-		case "Success":
-			var addressList = make([]Address, 0)
-			validAddress := result.Get("data.addressList").Array()
-			for _, addressData := range validAddress {
-				err, address := parseAddress(addressData)
-				if err != nil {
-					return err
-				}
-				addressList = append(addressList, address)
-			}
-			session.AddressList = addressList
-			return nil
-		case "AUTH_FAIL":
-			return errors.New(fmt.Sprintf("%s %s", result.Get("msg").Str, "auth-token 过期"))
-		default:
-			return errors.New(fmt.Sprintf(result.Get("msg").Str))
+	var addressList = make([]Address, 0)
+	validAddress := result.Get("data.addressList").Array()
+	for _, addressData := range validAddress {
+		err, address := parseAddress(addressData)
+		if err != nil {
+			return err, nil
 		}
-	} else {
-		return errors.New(fmt.Sprintf("[%v] %s", resp.StatusCode, body))
+		addressList = append(addressList, address)
 	}
+	return nil, addressList
 }
 
 func (session *Session) SetAddress(address Address) error {
 	session.Address = address
-	urlPath := SetAddressAPI
 	data := SetAddressParam{
 		AddressId: session.Address.AddressId,
 	}
 	dataStr, _ := json.Marshal(data)
-	req, _ := http.NewRequest("POST", urlPath, bytes.NewReader(dataStr))
-	req.Header = *session.Headers
-
-	resp, err := session.Client.Do(req)
-	if err != nil {
-		return err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	resp.Body.Close()
-	if resp.StatusCode == 200 {
-		result := gjson.Parse(string(body))
-		switch result.Get("code").Str {
-		case "Success":
-			return nil
-		default:
-			return errors.New(fmt.Sprintf(result.Get("msg").Str))
-		}
-	} else {
-		return errors.New(fmt.Sprintf("[%v] %s", resp.StatusCode, body))
-	}
+	err, _ := session.Request.POST(SetAddressAPI, dataStr)
+	return err
 }
 
 func (session *Session) ChooseAddress() error {
-	fmt.Printf("\n########## 选择用户名下收货地址 ###########\n")
-	err := session.GetAddress()
+	err, addressList := session.GetAddress()
 	if err != nil {
 		return err
 	}
-	if len(session.AddressList) == 0 {
+	if len(addressList) == 0 {
 		return errors.New("没有有效的收货地址，请前往 APP 添加或者检查 Auth-Token 是否正确")
 	}
-	for i, addr := range session.AddressList {
+	for i, addr := range addressList {
 		fmt.Printf("[%v] %s %s %s %s %s \n", i, addr.Name, addr.DistrictName, addr.ReceiverAddress, addr.DetailAddress, addr.Mobile)
 	}
 	var index int
 	for true {
 		fmt.Println("\n请输入地址序号（0, 1, 2...)：")
 		stdin := bufio.NewReader(os.Stdin)
-		_, err := fmt.Fscanln(stdin, &index)
+		_, err = fmt.Fscanln(stdin, &index)
 		if err != nil {
 			fmt.Printf("输入有误：%s!\n", err)
-		} else if index >= len(session.AddressList) {
-			fmt.Println("输入有误：超过最大序号！")
+		} else if index >= len(addressList) {
+			fmt.Println("\n输入有误：超过最大序号！")
 		} else {
 			break
 		}
 	}
-	session.SetAddress(session.AddressList[index])
+	session.SetAddress(addressList[index])
 	return nil
 }

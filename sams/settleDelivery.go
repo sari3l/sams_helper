@@ -1,13 +1,8 @@
 package sams
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"github.com/tidwall/gjson"
-	"io/ioutil"
-	"net/http"
 )
 
 type SettleDelivery struct {
@@ -23,20 +18,20 @@ type SettleDelivery struct {
 	FirstPeriod             int64    `json:"firstPeriod"`
 }
 
-func parseSettleDelivery(g gjson.Result) (error, SettleDelivery) {
+func parseSettleDelivery(result gjson.Result) (error, SettleDelivery) {
 	r := SettleDelivery{
-		DeliveryType:            g.Get("deliveryType").Int(),
-		DeliveryName:            g.Get("deliveryName").Str,
-		DeliveryDesc:            g.Get("deliveryDesc").Str,
-		ExpectArrivalTime:       g.Get("expectArrivalTime").Str,
-		ExpectArrivalEndTime:    g.Get("expectArrivalEndTime").Str,
-		StoreDeliveryTemplateId: g.Get("storeDeliveryTemplateId").Str,
-		AreaBlockId:             g.Get("AreaBlockId").Str,
-		AreaBlockName:           g.Get("areaBlockName").Str,
-		FirstPeriod:             g.Get("firstPeriod").Int(),
+		DeliveryType:            result.Get("deliveryType").Int(),
+		DeliveryName:            result.Get("deliveryName").Str,
+		DeliveryDesc:            result.Get("deliveryDesc").Str,
+		ExpectArrivalTime:       result.Get("expectArrivalTime").Str,
+		ExpectArrivalEndTime:    result.Get("expectArrivalEndTime").Str,
+		StoreDeliveryTemplateId: result.Get("storeDeliveryTemplateId").Str,
+		AreaBlockId:             result.Get("AreaBlockId").Str,
+		AreaBlockName:           result.Get("areaBlockName").Str,
+		FirstPeriod:             result.Get("firstPeriod").Int(),
 	}
 
-	for _, v := range g.Get("deliveryModeIdList").Array() {
+	for _, v := range result.Get("deliveryModeIdList").Array() {
 		r.DeliveryModeIdList = append(r.DeliveryModeIdList, v.Str)
 	}
 	return nil, r
@@ -74,7 +69,7 @@ func (session *Session) GetSettleInfo(result gjson.Result) error {
 
 type StoreInfo struct {
 	StoreId                 string `json:"storeId"`
-	StoreType               string `json:"storeType"`
+	StoreType               int64  `json:"storeType"`
 	AreaBlockId             string `json:"areaBlockId"`
 	StoreDeliveryTemplateId string `json:"-"`
 	DeliveryModeId          string `json:"-"`
@@ -83,7 +78,7 @@ type StoreInfo struct {
 type DeliveryInfoVO struct {
 	StoreDeliveryTemplateId string `json:"storeDeliveryTemplateId"`
 	DeliveryModeId          string `json:"deliveryModeId"`
-	StoreType               string `json:"storeType"`
+	StoreType               int64  `json:"storeType"`
 }
 
 type SettleParam struct {
@@ -99,13 +94,11 @@ type SettleParam struct {
 }
 
 func (session *Session) CheckSettleInfo() error {
-	urlPath := SettleInfoAPI
-
 	data := SettleParam{
 		Uid:              session.Uid,
 		AddressId:        session.Address.AddressId,
 		DeliveryInfoVO:   session.DeliveryInfoVO,
-		CartDeliveryType: 2,
+		CartDeliveryType: session.Setting.DeliveryType,
 		StoreInfo:        session.FloorInfo.StoreInfo,
 		CouponList:       make([]string, 0),
 		IsSelfPickup:     0,
@@ -114,31 +107,9 @@ func (session *Session) CheckSettleInfo() error {
 	}
 
 	dataStr, _ := json.Marshal(data)
-	req, _ := http.NewRequest("POST", urlPath, bytes.NewReader(dataStr))
-	req.Header = *session.Headers
-
-	resp, err := session.Client.Do(req)
+	err, result := session.Request.POST(SettleInfoAPI, dataStr)
 	if err != nil {
 		return err
 	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	resp.Body.Close()
-	if resp.StatusCode == 200 {
-		result := gjson.Parse(string(body))
-		switch result.Get("code").Str {
-		case "Success":
-			return session.GetSettleInfo(result)
-		case "LIMITED":
-			return LimitedErr
-		case "CART_GOOD_CHANGE":
-			return CartGoodChangeErr
-		default:
-			return errors.New(result.Get("msg").Str)
-		}
-	} else {
-		return errors.New(fmt.Sprintf("[%v] %s", resp.StatusCode, body))
-	}
+	return session.GetSettleInfo(result)
 }

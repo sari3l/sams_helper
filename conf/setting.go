@@ -6,9 +6,18 @@ import (
 	"io/ioutil"
 )
 
+type ProxySet struct {
+	IsEnabled bool   `yaml:"isEnabled"`
+	ProxyUrl  string `yaml:"proxyUrl"`
+}
+
 type Setting struct {
-	AuthToken string            `yaml:"authToken"`
-	NoticeSet notice.NoticerSet `yaml:"noticeSet"`
+	AuthToken    string            `yaml:"authToken"`
+	DeviceType   int64             `yaml:"deviceType"`
+	DeliveryType int64             `yaml:"deliveryType"`
+	FloorId      int64             `yaml:"floorId"`
+	ProxySet     ProxySet          `yaml:"proxySet"`
+	NoticeSet    notice.NoticerSet `yaml:"noticeSet"`
 }
 
 func InitSetting() (error, Setting) {
