@@ -6,18 +6,18 @@
 
 ## 使用方式
 
-```go
-err := session.InitSession("<auth-token>", 2)
+修改 `config.yaml` 文件中以下内容
+
+```yaml
+authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
+noticeType: 1 				# 0->不通知, 1->bark, 2->mac sound
+barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设置为 Bark 通知 token
 ```
-
-### 参数说明
-
-1. 第一个参数：Sam's 登录后的 Header `auth-token`
-2. 第二个参数：1：急速达，2：全城配送，目前上海地区只开放了全城配送故默认为 2
 
 
 ## 更新：
 
+2022年04月15日 选择地址后自动更新购物车
 2022年04月14日 修正一些函数问题
 
 ## 声明

@@ -1,6 +1,16 @@
 package sams
 
+// 地址
+
 var AddressListAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/sams-user/receiver_address/address_list"
+var SetAddressAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/saveDeliveryAddress"
+
+type SetAddressParam struct {
+	AddressId string `json:"addressId"`
+	Uid       string `json:"uid"`
+	AppId     string `json:"appId"`
+	SaasId    string `json:"saasId"`
+}
 
 // 商店
 
@@ -42,6 +52,12 @@ type GoodsInfoParam struct {
 	GoodsList []Goods `json:"goodsList"`
 }
 
+var SettleInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/getSettleInfo"
+
+// 运力
+
 var CapacityDataAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/delivery/portal/getCapacityData"
+
+// 支付
 
 var CommitPayAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/commitPay"

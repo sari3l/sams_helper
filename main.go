@@ -1,18 +1,23 @@
 package main
 
 import (
+	"SAMS_buyer/conf"
+	"SAMS_buyer/notice"
 	"SAMS_buyer/sams"
 	"fmt"
-	"os/exec"
 	"time"
 )
 
 func main() {
+	err, setting := conf.InitSetting()
+	if err != nil {
+		fmt.Printf("%s", err)
+		return
+	}
+
 	// 初始化用户信息
 	session := sams.Session{}
-	err := session.InitSession(
-		"<token>",
-		2)
+	err = session.InitSession(setting.AuthToken)
 
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -106,10 +111,14 @@ func main() {
 		}
 	OrderLoop:
 		err = session.CommitPay()
-		fmt.Printf("########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
+		fmt.Printf("\n########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
 		switch err {
 		case nil:
 			fmt.Println("抢购成功，请前往app付款！")
+			err = notice.Do(setting.NoticeSet)
+			if err != nil {
+				fmt.Printf("%s", err)
+			}
 			return
 		case sams.LimitedErr1:
 			fmt.Printf("[%s] 立即重试...\n", err)
@@ -119,7 +128,8 @@ func main() {
 		}
 	}
 
-	for _ = range [3]int{} {
-		exec.Command("say", "抢到啦 快去付款", "--voice=Ting-ting").Run()
-	}
+	// mac sound notice
+	//for _ = range [3]int{} {
+	//	exec.Command("say", "", "--voice=Ting-ting").Run()
+	//}
 }

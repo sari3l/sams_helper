@@ -99,7 +99,7 @@ type SettleParam struct {
 }
 
 func (session *Session) CheckSettleInfo() error {
-	urlPath := "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/getSettleInfo"
+	urlPath := SettleInfoAPI
 
 	data := SettleParam{
 		Uid:              session.Uid,

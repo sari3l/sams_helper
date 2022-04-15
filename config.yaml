@@ -1,0 +1,15 @@
+# 山姆会员信息
+authToken: "<authToken>"
+
+# 通知
+noticeSet:
+  noticeType: 1            # 0->不通知, 1->bark, 2->mac sound,
+  bark:
+    barkServer: "https://api.day.app"
+    barkToken: "<barkToken>"
+    barkMessage: "【山姆助手】抢购成功，请及时付款！"
+    barkSound: "telegraph"
+  sound:
+    soundMessage: "山姆抢到啦 快去付款"
+    soundTimes: 2
+    soundVoice: "Ting-ting"

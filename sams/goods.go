@@ -55,7 +55,7 @@ func (session *Session) parseNormalGoods(result gjson.Result) (error, NormalGood
 func (session *Session) CheckGoods() error {
 	urlPath := GoodsInfoAPI
 	data := GoodsInfoParam{
-		FloorId: 1,
+		FloorId: session.FloorId,
 		StoreId: "",
 	}
 	goodsList := make([]Goods, 0)
@@ -91,7 +91,7 @@ func (session *Session) CheckGoods() error {
 			if result.Get("data.isHasException").Bool() == false {
 				return nil
 			} else {
-				fmt.Printf("========以下商品已过期====")
+				fmt.Printf("\n======== 以下商品已过期 ========\n")
 				for index, v := range result.Get("data.popUpInfo.goodsList").Array() {
 					_, goods := session.parseNormalGoods(v)
 					fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price)

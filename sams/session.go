@@ -2,6 +2,7 @@ package sams
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -26,23 +27,23 @@ type Session struct {
 	Headers        *http.Header   `json:"headers"`
 }
 
-func (session *Session) InitSession(AuthToken string, FloorId int64) error {
+func (session *Session) InitSession(AuthToken string) error {
 	session.AuthToken = AuthToken
-	session.FloorId = FloorId
 
-	//u, _ := url.Parse("http://127.0.0.1:7890")
-	//t := &http.Transport{
-	//	MaxIdleConns:    10,
-	//	MaxConnsPerHost: 10,
-	//	IdleConnTimeout: time.Duration(10) * time.Second,
-	//	Proxy:           http.ProxyURL(u),
-	//}
-
-	session.Client = &http.Client{
-		Timeout: 60 * time.Second,
-		//Transport: t,
+	u, _ := url.Parse("http://127.0.0.1:9091")
+	t := &http.Transport{
+		MaxIdleConns:    10,
+		MaxConnsPerHost: 10,
+		IdleConnTimeout: time.Duration(10) * time.Second,
+		Proxy:           http.ProxyURL(u),
 	}
 
+	session.Client = &http.Client{
+		Timeout:   60 * time.Second,
+		Transport: t,
+	}
+
+	session.FloorId = 1
 	session.Headers = &http.Header{
 		"Host":            []string{"api-sams.walmartmobile.cn"},
 		"content-Type":    []string{"application/json"},

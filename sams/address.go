@@ -2,6 +2,8 @@ package sams
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
@@ -87,6 +89,38 @@ func (session *Session) GetAddress() error {
 	}
 }
 
+func (session *Session) SetAddress(address Address) error {
+	session.Address = address
+	urlPath := SetAddressAPI
+	data := SetAddressParam{
+		AddressId: session.Address.AddressId,
+	}
+	dataStr, _ := json.Marshal(data)
+	req, _ := http.NewRequest("POST", urlPath, bytes.NewReader(dataStr))
+	req.Header = *session.Headers
+
+	resp, err := session.Client.Do(req)
+	if err != nil {
+		return err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode == 200 {
+		result := gjson.Parse(string(body))
+		switch result.Get("code").Str {
+		case "Success":
+			return nil
+		default:
+			return errors.New(fmt.Sprintf(result.Get("msg").Str))
+		}
+	} else {
+		return errors.New(fmt.Sprintf("[%v] %s", resp.StatusCode, body))
+	}
+}
+
 func (session *Session) ChooseAddress() error {
 	fmt.Printf("\n########## 选择用户名下收货地址 ###########\n")
 	err := session.GetAddress()
@@ -112,6 +146,6 @@ func (session *Session) ChooseAddress() error {
 			break
 		}
 	}
-	session.Address = session.AddressList[index]
+	session.SetAddress(session.AddressList[index])
 	return nil
 }
