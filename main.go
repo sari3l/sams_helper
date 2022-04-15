@@ -6,6 +6,7 @@ import (
 	"SAMS_buyer/requests"
 	"SAMS_buyer/sams"
 	"fmt"
+	"net"
 	"time"
 )
 
@@ -40,7 +41,13 @@ func main() {
 		fmt.Println("\n########## 切换购物车收货地址 ##########\n")
 		err = session.ChooseAddress()
 		if err != nil {
-			goto AddressLoop
+			if _, ok := err.(net.Error); ok {
+				fmt.Println("\n网络错误，请检查是否设置错误代理!")
+				return
+			} else {
+				goto AddressLoop
+			}
+
 		} else {
 			fmt.Println("\n切换成功!")
 			fmt.Printf("%s %s %s %s %s \n", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)

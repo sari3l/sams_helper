@@ -4,7 +4,7 @@ deviceType: 1  # 1->ios 2->mini_program
 deliveryType: 2
 floorId: 1
 proxySet:
-  isEnabled: true
+  isEnabled: false
   proxyUrl: "http://127.0.0.1:9091"
 
 # 通知
