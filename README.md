@@ -10,7 +10,7 @@
 
 ```yaml
 authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
-noticeType: 1 				# 0->不通知, 1->bark, 2->mac sound
+noticeType: 1			# 0->不通知, 1->bark, 2->mac sound
 barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设置为 Bark 通知 token
 ```
 
