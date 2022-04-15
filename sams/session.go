@@ -30,17 +30,9 @@ type Session struct {
 func (session *Session) InitSession(AuthToken string) error {
 	session.AuthToken = AuthToken
 
-	u, _ := url.Parse("http://127.0.0.1:9091")
-	t := &http.Transport{
-		MaxIdleConns:    10,
-		MaxConnsPerHost: 10,
-		IdleConnTimeout: time.Duration(10) * time.Second,
-		Proxy:           http.ProxyURL(u),
-	}
 
 	session.Client = &http.Client{
 		Timeout:   60 * time.Second,
-		Transport: t,
 	}
 
 	session.FloorId = 1
