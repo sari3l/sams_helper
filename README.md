@@ -32,6 +32,11 @@ barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设
 - 2022年04月15日 选择地址后自动更新购物车
 - 2022年04月14日 修正一些函数问题
 
+## 效果
+
+<img src="https://github.com/sari3l/sams_helper/blob/main/pics/pic_1.jpeg" width="50%"/><br/>
+<img src="https://github.com/sari3l/sams_helper/blob/main/pics/pic_2.png" width="50%"/><br/>
+
 ## 声明
 
 本项目仅供学习交流，严禁用作商业行为，特别禁止黄牛加价代抢等！
