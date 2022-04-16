@@ -85,7 +85,7 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 		case "Success":
 			return nil, result
 		case "AUTH_FAIL":
-			return errors.New(fmt.Sprintf("%s %s", result.Get("msg").Str, "auth-token 过期")), gjson.Result{}
+			return conf.AuthFailErr, gjson.Result{}
 		case "LIMITED":
 			return conf.LimitedErr, gjson.Result{}
 		case "CART_GOOD_CHANGE":

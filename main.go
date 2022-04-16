@@ -27,9 +27,9 @@ func main() {
 	}
 
 	// 初始化用户信息
+	fmt.Println("\n########## 初始化用户信息 ##########\n")
 	session := sams.Session{}
 	err = session.InitSession(request, setting)
-
 	if err != nil {
 		fmt.Printf("%s", err)
 		return
@@ -132,7 +132,7 @@ func main() {
 		}
 
 		if session.SettleDeliveryInfo.ArrivalTimeStr != "" {
-			fmt.Printf("发现可用的配送时段::%s!\n", session.SettleDeliveryInfo.ArrivalTimeStr)
+			fmt.Printf("发现可用的配送时段:%s!\n", session.SettleDeliveryInfo.ArrivalTimeStr)
 		} else {
 			fmt.Println("当前无可用配送时间段")
 			time.Sleep(1 * time.Second)

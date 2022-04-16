@@ -2,6 +2,8 @@ package conf
 
 import "errors"
 
+var AuthTokenErr = errors.New("auth-token 可能未设置，请检查")
+var AuthFailErr = errors.New("鉴权失败 auth-token 过期")
 var CartGoodChangeErr = errors.New("购物车商品发生变化，请返回购物车页面重新结算")
 var LimitedErr = errors.New("服务器正忙,请稍后再试")
 var LimitedErr1 = errors.New("当前购物火爆，请稍后再试")

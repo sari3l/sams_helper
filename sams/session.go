@@ -30,8 +30,21 @@ func (session *Session) InitSession(request requests.Request, setting conf.Setti
 	session.Setting = setting
 	session.FloorId = setting.FloorId
 
+	return session.CheckSession()
+}
+
+func (session *Session) CheckSession() error {
+	if len(session.Setting.AuthToken) < 64 {
+		return conf.AuthTokenErr
+	}
+
+	err, _ := session.Request.GET(AddressListAPI)
+	if err != nil {
+		return err
+	}
+
 	// 设置支付方式
-	err := session.ChoosePayment()
+	err = session.ChoosePayment()
 	if err != nil {
 		return err
 	}
