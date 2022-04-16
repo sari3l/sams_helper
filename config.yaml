@@ -3,6 +3,7 @@ authToken: "<authToken>"
 deviceType: 1  # 1->ios 2->mini_program
 deliveryType: 2
 floorId: 1
+ignoreInvalid: true  # 是否忽略无效商品
 proxySet:
   isEnabled: false
   proxyUrl: "http://127.0.0.1:9091"

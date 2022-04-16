@@ -79,6 +79,10 @@ func (session *Session) CheckGoods() error {
 			_, goods := session.parseNormalGoods(v)
 			fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price)
 		}
-		return conf.OOSErr
+		if session.Setting.IgnoreInvalid {
+			return nil
+		} else {
+			return conf.OOSErr
+		}
 	}
 }
