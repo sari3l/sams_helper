@@ -10,7 +10,7 @@
 
 ```yaml
 authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
-deviceType: 1			# 1->移动端模拟，1->小程序模拟
+deviceType: 1			# 1->移动端模拟，2->小程序模拟
 deliveryType: 2                 # 1->极速达，2->全城配
 ignoreInvalid: true             # 是否忽略无效商品
 noticeType: 1			# 0->不通知, 1->bark, 2->mac sound
