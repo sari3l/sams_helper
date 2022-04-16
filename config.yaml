@@ -1,7 +1,7 @@
 # 山姆会员信息
 authToken: "<authToken>"
 deviceType: 1  # 1->ios 2->mini_program
-deliveryType: 2
+deliveryType: 2  # 1->极速达 2->全城配
 floorId: 1
 ignoreInvalid: true  # 是否忽略无效商品
 proxySet:

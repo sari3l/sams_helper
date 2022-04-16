@@ -9,7 +9,7 @@ import (
 
 type FloorInfo struct {
 	FloorId         int64         `json:"floorId"`
-	Amout           string        `json:"amout"`
+	Amount          string        `json:"amount"`
 	Quantity        int64         `json:"quantity"`
 	StoreInfo       StoreInfo     `json:"storeInfo"`
 	NormalGoodsList []NormalGoods `json:"normalGoodsList"`
@@ -23,7 +23,7 @@ type Cart struct {
 func (session *Session) parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 	floorInfo := FloorInfo{}
 	floorInfo.FloorId = result.Get("floorId").Int()
-	floorInfo.Amout = result.Get("amount").Str
+	floorInfo.Amount = result.Get("amount").Str
 	floorInfo.Quantity = result.Get("quantity").Int()
 	floorInfo.StoreInfo = StoreInfo{
 		StoreId:                 result.Get("storeInfo.storeId").Str,
@@ -44,7 +44,7 @@ func (session *Session) parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 func (session *Session) parseMiniProgramGoodsInfo(result gjson.Result) (error, FloorInfo) {
 	floorInfo := FloorInfo{}
 	floorInfo.FloorId = session.FloorId
-	floorInfo.Amout = result.Get("selectedAmount").Str
+	floorInfo.Amount = result.Get("selectedAmount").Str
 	for _, v := range result.Get("normalGoodsList").Array() {
 		_, normalGoods := session.parseNormalGoods(v)
 		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, normalGoods)

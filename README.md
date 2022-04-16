@@ -6,16 +6,25 @@
 
 ## 使用方式
 
-修改 `config.yaml` 文件中以下内容
+修改 `config.yaml` 文件中以下内容：
 
 ```yaml
 authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
 deviceType: 1			# 1->移动端模拟，1->小程序模拟
-noticeType: 1			# 0->不通知, 1->bark, 2->mac sound
+deliveryType: 2                 # 1->极速达，2->全城配
 ignoreInvalid: true             # 是否忽略无效商品
+noticeType: 1			# 0->不通知, 1->bark, 2->mac sound
 barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设置为 Bark 通知 token
 ```
 
+## 注意
+
+1. `小程序模式`与`移动端模式`没有本质不同，随意选择即可。
+2. 如果购物车里同时存在`极速达`、`全城配`商品，若`deliveryType = 2`，则会尝试通过全城配购买极速达货物（可能无货）。
+3. `ignoreInvalid`
+   - true：在检测有无效商品时仍会尝试提交订单（可能会因为金额减少增加运费）。
+   - false：会一直检测等待至商品全部有效才会尝试提交订单。
+4. `noticeType = 2` 即 `Mac Sound` 提醒，仅对 OSX 系统有效。
 
 ## 更新：
 
