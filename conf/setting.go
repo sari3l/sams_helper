@@ -17,6 +17,7 @@ type Setting struct {
 	DeliveryType  int64             `yaml:"deliveryType"`
 	FloorId       int64             `yaml:"floorId"`
 	IgnoreInvalid bool              `yaml:"ignoreInvalid"`
+	PerDateLen    int               `yaml:"perDateLen"`
 	ProxySet      ProxySet          `yaml:"proxySet"`
 	NoticeSet     notice.NoticerSet `yaml:"noticeSet"`
 }

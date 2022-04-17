@@ -104,6 +104,8 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 			return conf.NoMatchDeliverMode, gjson.Result{}
 		case "FAIL":
 			return conf.FAILErr, gjson.Result{}
+		case "REQUEST_ERROR":
+			return errors.New(fmt.Sprintf("请求错误 %s", result.Get("msg").Str)), gjson.Result{}
 		default:
 			return errors.New(fmt.Sprintf(result.Get("msg").Str)), gjson.Result{}
 		}

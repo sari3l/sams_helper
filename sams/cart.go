@@ -1,8 +1,8 @@
 package sams
 
 import (
+	"SAMS_buyer/conf"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
 )
@@ -78,7 +78,7 @@ func (session *Session) SetCartInfo(result gjson.Result) error {
 			cart.FloorInfoList = append(cart.FloorInfoList, floor)
 		}
 	default:
-		return errors.New("未知设备类型")
+		return conf.DeliveryTypeErr
 	}
 	session.Cart = cart
 	return nil

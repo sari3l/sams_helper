@@ -6,6 +6,8 @@
 
 ## 使用方式
 
+### 0x01 配置
+
 修改 `config.yaml` 文件中以下内容：
 
 ```yaml
@@ -16,6 +18,29 @@ ignoreInvalid: true             # 是否忽略无效商品
 noticeType: 1			# 0->不通知, 1->bark, 2->mac sound
 barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设置为 Bark 通知 token
 ```
+
+### 0x02 运行方式
+
+#### I. 源代码
+
+命令行运行
+
+```shell
+go run main.go
+```
+
+#### II. Release
+
+1. 从 [Releases](https://github.com/sari3l/sams_helper/releases) 页面下载对应系统版本。
+2. 将 [config.yaml](https://github.com/sari3l/sams_helper/blob/main/config.yaml) 单独保存至与执行文件同级目录下并修改。
+   ```plain
+   .
+   ├── LICENSE
+   ├── README.md
+   ├── config.yaml
+   └── sams_helper
+   ```
+3. 命令行运行可执行文件。
 
 ## 注意
 

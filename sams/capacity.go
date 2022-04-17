@@ -97,15 +97,11 @@ func (session *Session) SetCapacity() error {
 
 func (session *Session) CheckCapacity() error {
 	data := make(map[string]interface{})
-	data["perDateList"] = []string{
-		time.Now().Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 1).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 2).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 3).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 4).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 5).Format("2006-01-02"),
-		time.Now().AddDate(0, 0, 6).Format("2006-01-02"),
+	var perDateList []string
+	for i := 0; i <= session.Setting.PerDateLen; i++ {
+		perDateList = append(perDateList, time.Now().AddDate(0, 0, i).Format("2006-01-02"))
 	}
+	data["perDateList"] = perDateList
 	data["storeDeliveryTemplateId"] = session.Cart.FloorInfoList[0].StoreInfo.StoreDeliveryTemplateId
 	dataStr, _ := json.Marshal(data)
 	err, result := session.Request.POST(CapacityDataAPI, dataStr)
