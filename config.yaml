@@ -23,23 +23,36 @@ proxySet:
 # 通知设置
 noticeSet:
   # 通知类型
-  # 0->不通知 | 1->Bark | 2->OSX 系统语音
+  # 0->不通知 | 1->Bark | 2->Server酱 | 3->OSX 系统语音
   noticeType: 0
-  # Bark 设置
+
+  # Bark 通知配置
   bark:
     # Bark 端点地址
     barkServer: "https://api.day.app"
     # Bark Token
     barkToken: "<barkToken>"
-    # 提示信息
+    # 信息内容
     barkMessage: "【山姆助手】抢购成功，请及时付款！"
     # 提示音
     barkSound: "telegraph"
-  # OSX 系统语音设置
+
+  # Server酱 通知配置
+  ftqq:
+    # Server酱 端点地址
+    ftqqServer: "https://sctapi.ftqq.com"
+    # 用户 Token，获取方式：https://sct.ftqq.com/sendkey
+    ftqqSendKey: "<ftqqSendKey>"
+    # 信息标题
+    ftqqTitle: "【山姆助手】提醒"
+    # 信息内容
+    ftqqDesp: "抢购成功，请及时付款！"
+
+  # OSX 系统语音配置
   sound:
     # 语音信息
     soundMessage: "山姆抢到啦 快去付款"
-    # 重复次数
+    # 重复播报次数
     soundTimes: 2
     # 播报声音
     soundVoice: "Ting-ting"

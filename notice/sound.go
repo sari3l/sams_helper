@@ -13,13 +13,11 @@ type SoundSet struct {
 
 // MacSound only for mac
 func MacSound(soundSet SoundSet) error {
-
 	for i := 0; i < soundSet.Times; i++ {
 		err := exec.Command("say", soundSet.Message, fmt.Sprintf("--voice=%s", soundSet.Voice)).Run()
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }

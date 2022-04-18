@@ -65,7 +65,11 @@ func main() {
 	CartLoop:
 		// 商品列表获取，与地址挂钩
 		fmt.Printf("\n########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
-		_ = session.CheckCart()
+		if err = session.CheckCart(); err != nil {
+			fmt.Println(err)
+			time.Sleep(1 * time.Second)
+			goto CartLoop
+		}
 		sumPrice := int64(0)
 		for _, v := range session.Cart.FloorInfoList {
 			if v.FloorId == session.FloorId {
@@ -136,7 +140,7 @@ func main() {
 			}
 		}
 
-		fmt.Printf("\n已自动选择第一条可用的配送时段")
+		fmt.Printf("\n已自动选择第一条可用的配送时段\n")
 
 	OrderLoop:
 		// 下订单操作

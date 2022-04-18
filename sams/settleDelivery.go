@@ -81,18 +81,6 @@ type DeliveryInfoVO struct {
 	StoreType               int64  `json:"storeType"`
 }
 
-type SettleParam struct {
-	Uid              string         `json:"uid"`
-	AddressId        string         `json:"addressId"`
-	DeliveryInfoVO   DeliveryInfoVO `json:"deliveryInfoVO"`
-	CartDeliveryType int64          `json:"cartDeliveryType"`
-	StoreInfo        StoreInfo      `json:"storeInfo"`
-	CouponList       []string       `json:"couponList"`
-	IsSelfPickup     int64          `json:"isSelfPickup"`
-	FloorId          int64          `json:"floorId"`
-	GoodsList        []Goods        `json:"goodsList"`
-}
-
 func (session *Session) CheckSettleInfo() error {
 	data := SettleParam{
 		Uid:              session.Uid,

@@ -22,7 +22,7 @@ func BarkPush(barkSet BarkSet) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode == 200 {
 		return nil
 	} else {

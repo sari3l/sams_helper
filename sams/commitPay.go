@@ -7,46 +7,6 @@ import (
 	"strconv"
 )
 
-type CommitPayParam struct {
-	GoodsList        []Goods               `json:"goodsList"`
-	InvoiceInfo      map[int64]interface{} `json:"invoiceInfo"`
-	CartDeliveryType int64                 `json:"cartDeliveryType"`
-	FloorId          int64                 `json:"floorId"`
-
-	PurchaserName      string             `json:"purchaserName"`
-	SettleDeliveryInfo SettleDeliveryInfo `json:"settleDeliveryInfo"`
-	PayType            int64              `json:"payType"`
-	Currency           string             `json:"currency"`
-	Channel            string             `json:"channel"`
-	ShortageId         int64              `json:"shortageId"`
-	OrderType          int64              `json:"orderType"`
-	Uid                string             `json:"uid"`
-	AppId              string             `json:"appId"`
-	AddressId          string             `json:"addressId"`
-	DeliveryInfoVO     DeliveryInfoVO     `json:"deliveryInfoVO"`
-	Remark             string             `json:"remark"`
-	StoreInfo          StoreInfo          `json:"storeInfo"`
-	ShortageDesc       string             `json:"shortageDesc"`
-	PayMethodId        string             `json:"payMethodId"`
-}
-
-type IOSCommitPayParam struct {
-	CommitPayParam
-	Amount       string `json:"amount"`
-	TradeType    string `json:"tradeType"`
-	PurchaserId  string `json:"purchaserId"`
-	IsSelfPickup int64  `json:"isSelfPickup"`
-}
-
-type MiniProgramCommitPayParam struct {
-	CommitPayParam
-	Amount                int64    `json:"amount"`
-	LabelList             string   `json:"labelList"`
-	IsSelectShoppingNotes bool     `json:"isSelectShoppingNotes"`
-	CouponList            []string `json:"couponList"`
-	SaasId                string   `json:"saasId"`
-}
-
 type OrderInfo struct {
 	IsSuccess bool    `json:"isSuccess"`
 	OrderNo   string  `json:"orderNo"`

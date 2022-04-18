@@ -14,9 +14,10 @@
 authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
 deliveryType: 2                 # 1->极速达，2->全城配
 ignoreInvalid: true             # 是否忽略无效商品
-noticeType: 0			# 0->不通知, 1->Bark, 2->OSX 系统语音
-barkToken: "<barkToken>"	# 若 noticeType 设为 1，需要同时将此参数设置为 Bark 通知 token
+noticeType: 0			# 0->不通知, 1->Bark, 2->Server酱，3->OSX 系统语音
 ```
+
+其他配置（尤其是通知相关配置）请查看文件内注释自行修改
 
 ### 0x02 运行方式
 
