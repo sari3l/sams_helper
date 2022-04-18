@@ -3,35 +3,48 @@ package sams
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/tidwall/gjson"
+	"strconv"
 )
 
-type CommitPayPram struct {
-	GoodsList          []Goods               `json:"goodsList"`
-	InvoiceInfo        map[int64]interface{} `json:"invoiceInfo"`
-	CartDeliveryType   int64                 `json:"cartDeliveryType"`
-	FloorId            int64                 `json:"floorId"`
-	Amount             string                `json:"amount"`
-	PurchaserName      string                `json:"purchaserName"`
-	SettleDeliveryInfo SettleDeliveryInfo    `json:"settleDeliveryInfo"`
-	TradeType          string                `json:"tradeType"` //"APP"
-	PurchaserId        string                `json:"purchaserId"`
-	PayType            int64                 `json:"payType"`
-	Currency           string                `json:"currency"`     // CNY
-	Channel            string                `json:"channel"`      // wechat
-	ShortageId         int64                 `json:"shortageId"`   //1
-	IsSelfPickup       int64                 `json:"isSelfPickup"` //0
-	OrderType          int64                 `json:"orderType"`    //0
-	Uid                string                `json:"uid"`
-	AppId              string                `json:"appId"`
-	AddressId          string                `json:"addressId"`
-	DeliveryInfoVO     DeliveryInfoVO        `json:"deliveryInfoVO"`
-	Remark             string                `json:"remark"`
-	StoreInfo          StoreInfo             `json:"storeInfo"`
-	ShortageDesc       string                `json:"shortageDesc"`
-	PayMethodId        string                `json:"payMethodId"`
-	LabelList          string                `json:"labelList"`
+type CommitPayParam struct {
+	GoodsList        []Goods               `json:"goodsList"`
+	InvoiceInfo      map[int64]interface{} `json:"invoiceInfo"`
+	CartDeliveryType int64                 `json:"cartDeliveryType"`
+	FloorId          int64                 `json:"floorId"`
+
+	PurchaserName      string             `json:"purchaserName"`
+	SettleDeliveryInfo SettleDeliveryInfo `json:"settleDeliveryInfo"`
+	PayType            int64              `json:"payType"`
+	Currency           string             `json:"currency"`
+	Channel            string             `json:"channel"`
+	ShortageId         int64              `json:"shortageId"`
+	OrderType          int64              `json:"orderType"`
+	Uid                string             `json:"uid"`
+	AppId              string             `json:"appId"`
+	AddressId          string             `json:"addressId"`
+	DeliveryInfoVO     DeliveryInfoVO     `json:"deliveryInfoVO"`
+	Remark             string             `json:"remark"`
+	StoreInfo          StoreInfo          `json:"storeInfo"`
+	ShortageDesc       string             `json:"shortageDesc"`
+	PayMethodId        string             `json:"payMethodId"`
+}
+
+type IOSCommitPayParam struct {
+	CommitPayParam
+	Amount       string `json:"amount"`
+	TradeType    string `json:"tradeType"`
+	PurchaserId  string `json:"purchaserId"`
+	IsSelfPickup int64  `json:"isSelfPickup"`
+}
+
+type MiniProgramCommitPayParam struct {
+	CommitPayParam
+	Amount                int64    `json:"amount"`
+	LabelList             string   `json:"labelList"`
+	IsSelectShoppingNotes bool     `json:"isSelectShoppingNotes"`
+	CouponList            []string `json:"couponList"`
+	SaasId                string   `json:"saasId"`
 }
 
 type OrderInfo struct {
@@ -49,10 +62,11 @@ type PayInfo struct {
 }
 
 type SettleDeliveryInfo struct {
-	DeliveryType         int64  `json:"deliveryType"`         //默认0
-	ExpectArrivalTime    string `json:"expectArrivalTime"`    //配送时间: 1649922300000
-	ExpectArrivalEndTime string `json:"expectArrivalEndTime"` //配送时间
-	ArrivalTimeStr       string `json:"-"`
+	DeliveryType         int64  `json:"deliveryType"`
+	DeliveryDesc         string `json:"deliveryDesc"`
+	DeliveryName         string `json:"deliveryName"`
+	ExpectArrivalTime    string `json:"expectArrivalTime"`
+	ExpectArrivalEndTime string `json:"expectArrivalEndTime"`
 }
 
 func (session *Session) GetOrderInfo(result gjson.Result) (error, OrderInfo) {
@@ -71,34 +85,53 @@ func (session *Session) GetOrderInfo(result gjson.Result) (error, OrderInfo) {
 }
 
 func (session *Session) CommitPay() (error, OrderInfo) {
-	data := CommitPayPram{
-		GoodsList:          session.GoodsList,
-		InvoiceInfo:        make(map[int64]interface{}),
-		CartDeliveryType:   session.Setting.DeliveryType, // 1,急速到达 2,全城配送
-		FloorId:            session.FloorId,
-		Amount:             "13123", //测试没用但必须有
-		PurchaserName:      "",
-		SettleDeliveryInfo: session.SettleDeliveryInfo,
-		TradeType:          "APP",
-		PurchaserId:        "",
-		PayType:            0,
+	_data := CommitPayParam{
+		DeliveryInfoVO:   session.DeliveryInfoVO,
+		StoreInfo:        session.FloorInfo.StoreInfo,
+		Channel:          session.Channel,
+		InvoiceInfo:      make(map[int64]interface{}),
+		AddressId:        session.Address.AddressId,
+		CartDeliveryType: session.Setting.DeliveryType,
+		FloorId:          session.FloorId,
+		GoodsList:        session.GoodsList,
+
 		Currency:           "CNY",
-		Channel:            session.Channel,
-		ShortageId:         1,
-		IsSelfPickup:       0,
 		OrderType:          0,
-		LabelList:          "",    // 小程序模式必须有
-		Uid:                "123", //s.Uid,
-		AppId:              fmt.Sprintf("123"),
-		AddressId:          session.Address.AddressId,
-		DeliveryInfoVO:     session.DeliveryInfoVO,
-		Remark:             "",
-		StoreInfo:          session.FloorInfo.StoreInfo,
-		ShortageDesc:       "其他商品继续配送（缺货商品直接退款）",
 		PayMethodId:        session.SubSaasId,
+		PayType:            0,
+		Remark:             "",
+		ShortageDesc:       "其他商品继续配送（缺货商品直接退款）",
+		ShortageId:         1,
+		SettleDeliveryInfo: session.SettleDeliveryInfo,
+		Uid:                session.Uid,
+		AppId:              "wx111",
 	}
 
-	dataStr, _ := json.Marshal(data)
+	var dataStr []byte
+	// 为了对照数据包，特意按设备类型排序观察
+	switch session.Setting.DeviceType {
+	case 2:
+		_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
+		data := MiniProgramCommitPayParam{
+			CommitPayParam:        _data,
+			Amount:                _amount,
+			IsSelectShoppingNotes: true,
+			CouponList:            []string{},
+			LabelList:             "",
+			SaasId:                "1818",
+		}
+		dataStr, _ = json.Marshal(data)
+	default: // ios
+		data := IOSCommitPayParam{
+			CommitPayParam: _data,
+			Amount:         session.FloorInfo.Amount,
+			TradeType:      "APP",
+			PurchaserId:    "",
+			IsSelfPickup:   0,
+		}
+		dataStr, _ = json.Marshal(data)
+	}
+
 	err, result := session.Request.POST(CommitPayAPI, dataStr)
 	if err != nil {
 		return err, OrderInfo{}

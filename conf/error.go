@@ -16,3 +16,6 @@ var NotDeliverCapCityErr = errors.New("当前配送时间段已约满，请重�
 var DecreaseCapacityCountError = errors.New("扣减运力失败")
 var StoreHasClosedError = errors.New("门店已打烊")
 var DeliveryTypeErr = errors.New("未知设备类型")
+var NotCheckShopPendingErr = errors.New("请阅读并勾选《购物须知》")
+
+// 429 429 {"message":"Requests rate limited. stage:service"}

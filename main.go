@@ -20,8 +20,7 @@ func main() {
 
 	// 初始化 requests
 	request := requests.Request{}
-	err = request.InitRequest(setting)
-	if err != nil {
+	if err = request.InitRequest(setting); err != nil {
 		fmt.Printf("%s", err)
 		return
 	}
@@ -29,8 +28,7 @@ func main() {
 	// 初始化用户信息
 	fmt.Println("\n########## 初始化用户信息 ##########\n")
 	session := sams.Session{}
-	err = session.InitSession(request, setting)
-	if err != nil {
+	if err = session.InitSession(request, setting); err != nil {
 		fmt.Printf("%s", err)
 		return
 	}
@@ -39,8 +37,7 @@ func main() {
 	AddressLoop:
 		// 选取收货地址
 		fmt.Println("\n########## 切换购物车收货地址 ##########\n")
-		err = session.ChooseAddress()
-		if err != nil {
+		if err = session.ChooseAddress(); err != nil {
 			if _, ok := err.(net.Error); ok {
 				fmt.Println("\n网络错误，请检查是否设置错误代理!")
 				return
@@ -55,9 +52,9 @@ func main() {
 
 	StoreLoop:
 		// 获取门店
-		err = session.GetStoreList()
-		if err != nil {
+		if err = session.GetStoreList(); err != nil {
 			fmt.Printf("%s", err)
+			time.Sleep(1 * time.Second)
 			goto StoreLoop
 		}
 
@@ -68,12 +65,14 @@ func main() {
 	CartLoop:
 		// 商品列表获取，与地址挂钩
 		fmt.Printf("\n########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
-		session.CheckCart()
+		_ = session.CheckCart()
+		sumPrice := int64(0)
 		for _, v := range session.Cart.FloorInfoList {
 			if v.FloorId == session.FloorId {
 				for index, goods := range v.NormalGoodsList {
 					session.GoodsList = append(session.GoodsList, goods.ToGoods())
-					fmt.Printf("[%v] %s 数量：%v 总价：%d\n", index, goods.GoodsName, goods.Quantity, goods.Price)
+					fmt.Printf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100)
+					sumPrice += goods.Quantity * goods.Price
 				}
 				session.FloorInfo = v
 				session.DeliveryInfoVO = sams.DeliveryInfoVO{
@@ -81,6 +80,7 @@ func main() {
 					DeliveryModeId:          v.StoreInfo.DeliveryModeId,
 					StoreType:               v.StoreInfo.StoreType,
 				}
+				fmt.Printf("\n订单总价：%d.%d\n", sumPrice/100, sumPrice%100)
 			} else {
 				// 无效商品
 				//for index, goods := range v.NormalGoodsList {
@@ -90,6 +90,7 @@ func main() {
 		}
 		if len(session.GoodsList) == 0 {
 			fmt.Println("当前购物车中无有效商品")
+			time.Sleep(1 * time.Second)
 			goto CartLoop
 		}
 
@@ -98,21 +99,21 @@ func main() {
 		fmt.Printf("\n########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckGoods(); err != nil {
 			fmt.Println(err)
-			time.Sleep(1 * time.Second)
 			switch err {
 			case conf.OOSErr:
 				goto CartLoop
 			default:
+				time.Sleep(500 * time.Millisecond)
 				goto GoodsLoop
 			}
 		}
 		if err = session.CheckSettleInfo(); err != nil {
 			fmt.Printf("校验商品失败：%s\n", err)
-			time.Sleep(1 * time.Second)
 			switch err {
 			case conf.CartGoodChangeErr:
 				goto CartLoop
 			case conf.LimitedErr:
+				time.Sleep(500 * time.Millisecond)
 				goto GoodsLoop
 			case conf.NoMatchDeliverMode:
 				goto AddressLoop
@@ -124,25 +125,23 @@ func main() {
 	CapacityLoop:
 		// 运力获取
 		fmt.Printf("\n########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
-		err = session.CheckCapacity()
-		if err != nil {
+		if err = session.CheckCapacity(); err != nil {
 			fmt.Println(err)
-			time.Sleep(1 * time.Second)
-			goto CapacityLoop
+			switch err {
+			case conf.CapacityFullErr:
+				time.Sleep(1 * time.Second)
+				goto CapacityLoop
+			default:
+				goto CartLoop
+			}
 		}
 
-		if session.SettleDeliveryInfo.ArrivalTimeStr != "" {
-			fmt.Printf("发现可用的配送时段:%s!\n", session.SettleDeliveryInfo.ArrivalTimeStr)
-		} else {
-			fmt.Println("当前无可用配送时间段")
-			time.Sleep(1 * time.Second)
-			goto CapacityLoop
-		}
+		fmt.Printf("\n已自动选择第一条可用的配送时段")
 
 	OrderLoop:
 		// 下订单操作
-		err, order := session.CommitPay()
 		fmt.Printf("\n########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
+		err, order := session.CommitPay()
 		switch err {
 		case nil:
 			fmt.Printf("抢购成功，订单号 %s，请前往app付款！", order.OrderNo)

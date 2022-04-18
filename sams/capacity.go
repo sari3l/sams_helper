@@ -75,18 +75,19 @@ func (session *Session) SetCapacity() error {
 	session.SettleDeliveryInfo = SettleDeliveryInfo{}
 	isSet := false
 	for _, caps := range session.Capacity.CapCityResponseList {
-		if isSet {
-			break
-		}
 		for _, v := range caps.List {
 			fmt.Printf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled)
-			if v.TimeISFull == false && v.Disabled == false && session.SettleDeliveryInfo.ArrivalTimeStr == "" {
-				session.SettleDeliveryInfo.ArrivalTimeStr = fmt.Sprintf("%s %s - %s", caps.StrDate, v.StartTime, v.EndTime)
+			if v.TimeISFull == false && v.Disabled == false && session.SettleDeliveryInfo.ExpectArrivalTime == "" {
 				session.SettleDeliveryInfo.ExpectArrivalTime = v.StartRealTime
 				session.SettleDeliveryInfo.ExpectArrivalEndTime = v.EndRealTime
 				isSet = true
 				break
 			}
+		}
+		if isSet {
+			session.SettleDeliveryInfo.DeliveryType = session.Setting.DeliveryType
+			session.SettleDeliveryInfo.DeliveryName = caps.StrDate
+			break
 		}
 	}
 	if isSet {

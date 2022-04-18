@@ -1,23 +1,45 @@
-# 山姆会员信息
+# 山姆会员 Token
 authToken: "<authToken>"
-deviceType: 1  # 1->ios 2->mini_program
-deliveryType: 2  # 1->极速达 2->全城配
+# 设备类型 Header
+# 1->IOS | 2-> 小程序
+deviceType: 1
+# 配送方式
+# 1->极速达 | 2->全城配
+deliveryType: 2
+# 商品类型
+# 1->普通商品 | 2->全球购商品
 floorId: 1
-ignoreInvalid: true  # 是否忽略无效商品
+# 是否忽略无效商品
+ignoreInvalid: true
+# 运力搜索时间跨度（日）
 perDateLen : 7
+# 代理设置
 proxySet:
+  # 是否开启代理
   isEnabled: false
+  # 代理 URL
   proxyUrl: "http://127.0.0.1:9091"
 
-# 通知
+# 通知设置
 noticeSet:
-  noticeType: 1            # 0->不通知, 1->bark, 2->mac sound,
+  # 通知类型
+  # 0->不通知 | 1->Bark | 2->OSX 系统语音
+  noticeType: 0
+  # Bark 设置
   bark:
+    # Bark 端点地址
     barkServer: "https://api.day.app"
+    # Bark Token
     barkToken: "<barkToken>"
+    # 提示信息
     barkMessage: "【山姆助手】抢购成功，请及时付款！"
+    # 提示音
     barkSound: "telegraph"
+  # OSX 系统语音设置
   sound:
+    # 语音信息
     soundMessage: "山姆抢到啦 快去付款"
+    # 重复次数
     soundTimes: 2
+    # 播报声音
     soundVoice: "Ting-ting"

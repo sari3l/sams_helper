@@ -38,21 +38,20 @@ func (request *Request) InitRequest(setting conf.Setting) error {
 	}
 
 	request.Headers = &http.Header{
-		"Host":         []string{"api-sams.walmartmobile.cn"},
-		"content-Type": []string{"application/json"},
-		//"device-type":     []string{"ios"},
+		"Host":            []string{"api-sams.walmartmobile.cn"},
+		"content-Type":    []string{"application/json"},
 		"accept":          []string{"*/*"},
 		"auth-token":      []string{setting.AuthToken},
-		"user-agent":      []string{"Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E217 MicroMessenger/6.8.0(0x16080000) NetType/WIFI Language/en Branch/Br_trunk MiniProgramEnv/Mac"},
 		"Accept-Language": []string{"zh-Hans-CN;q=1, en-CN;q=0.9, ga-IE;q=0.8"},
 	}
+
 	switch setting.DeviceType {
-	case 1:
-		request.Headers.Set("device-type", "ios")
 	case 2:
 		request.Headers.Set("device-type", "mini_program")
-	default:
+		request.Headers.Set("user-agent", "Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E217 MicroMessenger/6.8.0(0x16080000) NetType/WIFI Language/en Branch/Br_trunk MiniProgramEnv/Mac")
+	default: // 默认 ios
 		request.Headers.Set("device-type", "ios")
+		request.Headers.Set("user-agent", "SamClub/5.0.47 (iPhone; iOS 15.4.1; Scale/3.00)SamClub/5.0.47 (iPhone; iOS 15.4.1; Scale/3.00)")
 	}
 	return nil
 }
@@ -78,7 +77,7 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 	if err != nil {
 		return err, gjson.Result{}
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode == 200 {
 		result := gjson.Parse(string(body))
 		switch result.Get("code").Str {
@@ -104,10 +103,12 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 			return conf.NoMatchDeliverMode, gjson.Result{}
 		case "FAIL":
 			return conf.FAILErr, gjson.Result{}
+		case "NotCheckShopPendingErr":
+			return conf.NotCheckShopPendingErr, gjson.Result{}
 		case "REQUEST_ERROR":
 			return errors.New(fmt.Sprintf("请求错误 %s", result.Get("msg").Str)), gjson.Result{}
 		default:
-			return errors.New(fmt.Sprintf(result.Get("msg").Str)), gjson.Result{}
+			return errors.New(fmt.Sprintf("code: %s %s", result.Get("code"), result.Get("msg").Str)), gjson.Result{}
 		}
 	} else {
 		return errors.New(fmt.Sprintf("[%v] %s", resp.StatusCode, body)), gjson.Result{}
