@@ -1,12 +1,13 @@
 package main
 
 import (
-	"SAMS_buyer/conf"
-	"SAMS_buyer/notice"
-	"SAMS_buyer/requests"
-	"SAMS_buyer/sams"
 	"fmt"
 	"net"
+	"sams_helper/conf"
+	"sams_helper/notice"
+	"sams_helper/requests"
+	"sams_helper/sams"
+	"strconv"
 	"time"
 )
 
@@ -26,7 +27,7 @@ func main() {
 	}
 
 	// 初始化用户信息
-	fmt.Println("\n########## 初始化用户信息 ##########\n")
+	fmt.Println("########## 初始化用户信息 ##########")
 	session := sams.Session{}
 	if err = session.InitSession(request, setting); err != nil {
 		fmt.Printf("%s", err)
@@ -36,18 +37,17 @@ func main() {
 	for true {
 	AddressLoop:
 		// 选取收货地址
-		fmt.Println("\n########## 切换购物车收货地址 ##########\n")
+		fmt.Println("########## 切换购物车收货地址 ##########")
 		if err = session.ChooseAddress(); err != nil {
 			if _, ok := err.(net.Error); ok {
-				fmt.Println("\n网络错误，请检查是否设置错误代理!")
+				fmt.Println(conf.ProxyErr)
 				return
 			} else {
 				goto AddressLoop
 			}
-
 		} else {
-			fmt.Println("\n切换成功!")
-			fmt.Printf("%s %s %s %s %s \n", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
+			fmt.Println("[>] 切换成功!")
+			fmt.Printf("[>] %s %s %s %s %s", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
 		}
 
 	StoreLoop:
@@ -64,19 +64,19 @@ func main() {
 
 	CartLoop:
 		// 商品列表获取，与地址挂钩
-		fmt.Printf("\n########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckCart(); err != nil {
 			fmt.Println(err)
 			time.Sleep(1 * time.Second)
 			goto CartLoop
 		}
-		sumPrice := int64(0)
+	CartShowLoop:
+		fmt.Printf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
+		session.GoodsList = make([]sams.Goods, 0)
 		for _, v := range session.Cart.FloorInfoList {
 			if v.FloorId == session.FloorId {
 				for index, goods := range v.NormalGoodsList {
 					session.GoodsList = append(session.GoodsList, goods.ToGoods())
 					fmt.Printf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100)
-					sumPrice += goods.Quantity * goods.Price
 				}
 				session.FloorInfo = v
 				session.DeliveryInfoVO = sams.DeliveryInfoVO{
@@ -84,7 +84,8 @@ func main() {
 					DeliveryModeId:          v.StoreInfo.DeliveryModeId,
 					StoreType:               v.StoreInfo.StoreType,
 				}
-				fmt.Printf("\n订单总价：%d.%d\n", sumPrice/100, sumPrice%100)
+				_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
+				fmt.Printf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100)
 			} else {
 				// 无效商品
 				//for index, goods := range v.NormalGoodsList {
@@ -93,14 +94,30 @@ func main() {
 			}
 		}
 		if len(session.GoodsList) == 0 {
-			fmt.Println("当前购物车中无有效商品")
+			fmt.Println(conf.NoGoodsErr)
 			time.Sleep(1 * time.Second)
 			goto CartLoop
 		}
 
+		if session.Setting.AutoFixPurchaseLimitSet.IsEnabled && (session.Setting.AutoFixPurchaseLimitSet.FixOffline || session.Setting.AutoFixPurchaseLimitSet.FixOnline) {
+			err, isChangedOffline, isChangedOnline := session.FixCart()
+			if err != nil {
+				goto CartLoop
+			} else {
+				if isChangedOffline {
+					fmt.Println("[>] 已自动修正当前限购数量，不影响线上购物车信息，将继续执行")
+					goto CartShowLoop
+				}
+				if isChangedOnline {
+					fmt.Println("[>] 已自动修正限购数量，将重新检查购物车")
+					goto CartLoop
+				}
+			}
+		}
+
 	GoodsLoop:
 		// 商品检查
-		fmt.Printf("\n########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05"))
+		fmt.Printf("########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckGoods(); err != nil {
 			fmt.Println(err)
 			switch err {
@@ -112,7 +129,7 @@ func main() {
 			}
 		}
 		if err = session.CheckSettleInfo(); err != nil {
-			fmt.Printf("校验商品失败：%s\n", err)
+			fmt.Printf("[!] 校验商品失败：%s\n", err)
 			switch err {
 			case conf.CartGoodChangeErr:
 				goto CartLoop
@@ -128,7 +145,7 @@ func main() {
 
 	CapacityLoop:
 		// 运力获取
-		fmt.Printf("\n########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
+		fmt.Printf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckCapacity(); err != nil {
 			fmt.Println(err)
 			switch err {
@@ -140,11 +157,11 @@ func main() {
 			}
 		}
 
-		fmt.Printf("\n已自动选择第一条可用的配送时段\n")
+		fmt.Printf("[>] 已自动选择第一条可用的配送时段\n")
 
 	OrderLoop:
 		// 下订单操作
-		fmt.Printf("\n########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
+		fmt.Printf("########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
 		err, order := session.CommitPay()
 		switch err {
 		case nil:
@@ -154,8 +171,8 @@ func main() {
 				fmt.Printf("%s", err)
 			}
 			return
-		case conf.LimitedErr1:
-			fmt.Println("立即重试...")
+		case conf.LimitedErr, conf.LimitedErr1:
+			fmt.Println("[!] 立即重试...")
 			goto OrderLoop
 		case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
 			goto CapacityLoop

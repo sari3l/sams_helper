@@ -1,10 +1,11 @@
 package sams
 
 import (
-	"SAMS_buyer/conf"
 	"encoding/json"
 	"fmt"
 	"github.com/tidwall/gjson"
+	"sams_helper/conf"
+	"strconv"
 )
 
 type FloorInfo struct {
@@ -20,7 +21,7 @@ type Cart struct {
 	FloorInfoList   []FloorInfo `json:"floorInfoList"`
 }
 
-func (session *Session) parseFloorInfo(result gjson.Result) (error, FloorInfo) {
+func parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 	floorInfo := FloorInfo{}
 	floorInfo.FloorId = result.Get("floorId").Int()
 	floorInfo.Amount = result.Get("amount").Str
@@ -33,9 +34,27 @@ func (session *Session) parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 		DeliveryModeId:          result.Get("storeInfo.deliveryModeId").Str,
 	}
 
+	// 普通商品
 	for _, v := range result.Get("normalGoodsList").Array() {
-		_, normalGoods := session.parseNormalGoods(v)
+		_, normalGoods := parseNormalGoods(v)
 		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, normalGoods)
+	}
+
+	// 促销商品
+	for _, promotionGoodsList := range result.Get("promotionFloorGoodsList").Array() {
+		for _, promotionGoods := range promotionGoodsList.Get("promotionGoodsList").Array() {
+			_, p := parseNormalGoods(promotionGoods)
+			floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, p)
+		}
+	}
+
+	// 有时间返回的 amount 为 “0”，为了方便显示按订单重新计算
+	amount, _ := strconv.ParseInt(floorInfo.Amount, 10, 64)
+	if amount == 0 {
+		for _, v := range floorInfo.NormalGoodsList {
+			amount += v.Quantity * v.Price
+		}
+		floorInfo.Amount = strconv.FormatInt(amount, 10)
 	}
 
 	return nil, floorInfo
@@ -46,7 +65,7 @@ func (session *Session) parseMiniProgramGoodsInfo(result gjson.Result) (error, F
 	floorInfo.FloorId = session.FloorId
 	floorInfo.Amount = result.Get("selectedAmount").Str
 	for _, v := range result.Get("normalGoodsList").Array() {
-		_, normalGoods := session.parseNormalGoods(v)
+		_, normalGoods := parseNormalGoods(v)
 		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, normalGoods)
 		for _, s := range session.StoreList {
 			if normalGoods.StoreId == s.StoreId {
@@ -69,7 +88,7 @@ func (session *Session) SetCartInfo(result gjson.Result) error {
 	switch session.Setting.DeviceType {
 	case 1:
 		for _, v := range result.Get("data.floorInfoList").Array() {
-			_, floor := session.parseFloorInfo(v)
+			_, floor := parseFloorInfo(v)
 			cart.FloorInfoList = append(cart.FloorInfoList, floor)
 		}
 	case 2:
@@ -82,6 +101,55 @@ func (session *Session) SetCartInfo(result gjson.Result) error {
 	}
 	session.Cart = cart
 	return nil
+}
+
+func (session *Session) ModifyCartGoodsInfo(goods Goods) error {
+	data := ModifyCartGoodsInfoParam{
+		CartGoodsInfo: goods,
+		Uid:           session.Uid,
+	}
+	dataStr, _ := json.Marshal(data)
+	err, _ := session.Request.POST(ModifyCartGoodsInfoAPI, dataStr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (session *Session) FixCart() (error, bool, bool) {
+	isChangedOffline := false
+	isChangedOnline := false
+	var removeQuantity int64 = 0
+	var removeAmount int64 = 0
+	for index, v := range session.Cart.FloorInfoList {
+		for index2, v2 := range v.NormalGoodsList {
+			if v2.PurchaseLimitV0.LimitNum < v2.Quantity {
+				// offline
+				fmt.Printf("[!] 校验发现限购商品：%s，限购数量：%d，现有数量：%d，正在修正中...\n", v2.GoodsName, v2.PurchaseLimitV0.LimitNum, v2.Quantity)
+				if session.Setting.AutoFixPurchaseLimitSet.FixOffline && !session.Setting.AutoFixPurchaseLimitSet.FixOnline {
+					removeQuantity += v2.Quantity - v2.PurchaseLimitV0.LimitNum
+					removeAmount += (v2.Quantity - v2.PurchaseLimitV0.LimitNum) * v2.Price
+					v2.Quantity = v2.PurchaseLimitV0.LimitNum
+					v.NormalGoodsList[index2] = v2
+					isChangedOffline = true
+				}
+				// online
+				if session.Setting.AutoFixPurchaseLimitSet.FixOnline {
+					_goods := v2.ToGoods()
+					_goods.Quantity = v2.PurchaseLimitV0.LimitNum
+					if err := session.ModifyCartGoodsInfo(_goods); err != nil {
+						return conf.FixCartErr, isChangedOffline, true
+					}
+					isChangedOnline = true
+				}
+
+			}
+		}
+		session.Cart.FloorInfoList[index].Quantity -= removeQuantity
+		_amount, _ := strconv.ParseInt(session.Cart.FloorInfoList[index].Amount, 10, 64)
+		session.Cart.FloorInfoList[index].Amount = strconv.FormatInt(_amount-removeAmount, 10)
+	}
+	return nil, isChangedOffline, isChangedOnline
 }
 
 func (session *Session) CheckCart() error {

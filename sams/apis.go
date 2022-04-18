@@ -34,6 +34,13 @@ type CartParam struct {
 	HomePagelatitude  string  `json:"homePagelatitude"`
 }
 
+var ModifyCartGoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/modifyCartGoodsInfo"
+
+type ModifyCartGoodsInfoParam struct {
+	CartGoodsInfo Goods  `json:"cartGoodsInfo"`
+	Uid           string `json:"uid"`
+}
+
 // 商品
 
 var GoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/checkGoodsInfo"
@@ -87,6 +94,7 @@ type CommitPayParam struct {
 	StoreInfo          StoreInfo          `json:"storeInfo"`
 	ShortageDesc       string             `json:"shortageDesc"`
 	PayMethodId        string             `json:"payMethodId"`
+	CouponList         []string           `json:"couponList"`
 }
 
 type IOSCommitPayParam struct {
@@ -99,9 +107,8 @@ type IOSCommitPayParam struct {
 
 type MiniProgramCommitPayParam struct {
 	CommitPayParam
-	Amount                int64    `json:"amount"`
-	LabelList             string   `json:"labelList"`
-	IsSelectShoppingNotes bool     `json:"isSelectShoppingNotes"`
-	CouponList            []string `json:"couponList"`
-	SaasId                string   `json:"saasId"`
+	Amount                int64  `json:"amount"`
+	LabelList             string `json:"labelList"`
+	IsSelectShoppingNotes bool   `json:"isSelectShoppingNotes"`
+	SaasId                string `json:"saasId"`
 }

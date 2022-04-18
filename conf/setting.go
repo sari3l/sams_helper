@@ -1,9 +1,9 @@
 package conf
 
 import (
-	"SAMS_buyer/notice"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"sams_helper/notice"
 )
 
 type ProxySet struct {
@@ -11,15 +11,22 @@ type ProxySet struct {
 	ProxyUrl  string `yaml:"proxyUrl"`
 }
 
+type AutoFixPurchaseLimitSet struct {
+	IsEnabled  bool `yaml:"isEnabled"`
+	FixOffline bool `yaml:"fixOffline"`
+	FixOnline  bool `yaml:"fixOnline"`
+}
+
 type Setting struct {
-	AuthToken     string            `yaml:"authToken"`
-	DeviceType    int64             `yaml:"deviceType"`
-	DeliveryType  int64             `yaml:"deliveryType"`
-	FloorId       int64             `yaml:"floorId"`
-	IgnoreInvalid bool              `yaml:"ignoreInvalid"`
-	PerDateLen    int               `yaml:"perDateLen"`
-	ProxySet      ProxySet          `yaml:"proxySet"`
-	NoticeSet     notice.NoticerSet `yaml:"noticeSet"`
+	AuthToken               string                  `yaml:"authToken"`
+	DeviceType              int64                   `yaml:"deviceType"`
+	DeliveryType            int64                   `yaml:"deliveryType"`
+	FloorId                 int64                   `yaml:"floorId"`
+	IgnoreInvalid           bool                    `yaml:"ignoreInvalid"`
+	AutoFixPurchaseLimitSet AutoFixPurchaseLimitSet `yaml:"autoFixPurchaseLimit"`
+	PerDateLen              int                     `yaml:"perDateLen"`
+	ProxySet                ProxySet                `yaml:"proxySet"`
+	NoticeSet               notice.NoticerSet       `yaml:"noticeSet"`
 }
 
 func InitSetting() (error, Setting) {

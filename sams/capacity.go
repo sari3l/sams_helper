@@ -1,10 +1,10 @@
 package sams
 
 import (
-	"SAMS_buyer/conf"
 	"encoding/json"
 	"fmt"
 	"github.com/tidwall/gjson"
+	"sams_helper/conf"
 	"time"
 )
 

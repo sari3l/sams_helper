@@ -46,15 +46,14 @@ func (session *Session) GetOrderInfo(result gjson.Result) (error, OrderInfo) {
 
 func (session *Session) CommitPay() (error, OrderInfo) {
 	_data := CommitPayParam{
-		DeliveryInfoVO:   session.DeliveryInfoVO,
-		StoreInfo:        session.FloorInfo.StoreInfo,
-		Channel:          session.Channel,
-		InvoiceInfo:      make(map[int64]interface{}),
-		AddressId:        session.Address.AddressId,
-		CartDeliveryType: session.Setting.DeliveryType,
-		FloorId:          session.FloorId,
-		GoodsList:        session.GoodsList,
-
+		DeliveryInfoVO:     session.DeliveryInfoVO,
+		StoreInfo:          session.FloorInfo.StoreInfo,
+		Channel:            session.Channel,
+		InvoiceInfo:        make(map[int64]interface{}),
+		AddressId:          session.Address.AddressId,
+		CartDeliveryType:   session.Setting.DeliveryType,
+		FloorId:            session.FloorId,
+		GoodsList:          session.GoodsList,
 		Currency:           "CNY",
 		OrderType:          0,
 		PayMethodId:        session.SubSaasId,
@@ -65,6 +64,7 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 		SettleDeliveryInfo: session.SettleDeliveryInfo,
 		Uid:                session.Uid,
 		AppId:              "wx111",
+		CouponList:         make([]string, 0),
 	}
 
 	var dataStr []byte
@@ -76,9 +76,9 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 			CommitPayParam:        _data,
 			Amount:                _amount,
 			IsSelectShoppingNotes: true,
-			CouponList:            []string{},
-			LabelList:             "",
-			SaasId:                "1818",
+
+			LabelList: "",
+			SaasId:    "1818",
 		}
 		dataStr, _ = json.Marshal(data)
 	default: // ios

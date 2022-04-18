@@ -1,4 +1,4 @@
-module SAMS_buyer
+module sams_helper
 
 go 1.18
 

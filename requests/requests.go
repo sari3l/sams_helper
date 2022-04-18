@@ -1,7 +1,6 @@
 package requests
 
 import (
-	"SAMS_buyer/conf"
 	"bytes"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"sams_helper/conf"
 	"time"
 )
 

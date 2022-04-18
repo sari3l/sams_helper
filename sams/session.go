@@ -1,8 +1,8 @@
 package sams
 
 import (
-	"SAMS_buyer/conf"
-	"SAMS_buyer/requests"
+	"sams_helper/conf"
+	"sams_helper/requests"
 )
 
 type Session struct {

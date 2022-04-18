@@ -1,12 +1,10 @@
 package sams
 
 import (
-	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/tidwall/gjson"
-	"os"
+	"sams_helper/conf"
 )
 
 type Address struct {
@@ -80,24 +78,14 @@ func (session *Session) ChooseAddress() error {
 		return err
 	}
 	if len(addressList) == 0 {
-		return errors.New("没有有效的收货地址，请前往 APP 添加或者检查 Auth-Token 是否正确")
+		return conf.NoValidAddressErr
 	}
 	for i, addr := range addressList {
-		fmt.Printf("[%v] %s %s %s %s %s \n", i, addr.Name, addr.DistrictName, addr.ReceiverAddress, addr.DetailAddress, addr.Mobile)
+		fmt.Printf("[%v] %s %s %s %s %s\n", i, addr.Name, addr.DistrictName, addr.ReceiverAddress, addr.DetailAddress, addr.Mobile)
 	}
-	var index int
-	for true {
-		fmt.Println("\n请输入地址序号（0, 1, 2...)：")
-		stdin := bufio.NewReader(os.Stdin)
-		_, err = fmt.Fscanln(stdin, &index)
-		if err != nil {
-			fmt.Printf("输入有误：%s!\n", err)
-		} else if index >= len(addressList) {
-			fmt.Println("\n输入有误：超过最大序号！")
-		} else {
-			break
-		}
+	index := conf.InputSelect(len(addressList))
+	if err = session.SetAddress(addressList[index]); err != nil {
+		return err
 	}
-	session.SetAddress(addressList[index])
 	return nil
 }

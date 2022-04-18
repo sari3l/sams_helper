@@ -11,12 +11,20 @@ deliveryType: 2
 floorId: 1
 # 是否忽略无效商品
 ignoreInvalid: true
+# 自动修正限购商品数量
+autoFixPurchaseLimit:
+  # 是否开启
+  isEnabled: true
+  # 是否开启线下修正，只影响最后提交订单内容
+  fixOffline: true
+  # 是否开启线上修正，会影响线上购物车商品的数量
+  fixOnline: false
 # 运力搜索时间跨度（日）
 perDateLen : 7
 # 代理设置
 proxySet:
   # 是否开启代理
-  isEnabled: false
+  isEnabled: true
   # 代理 URL
   proxyUrl: "http://127.0.0.1:9091"
 
