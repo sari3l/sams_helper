@@ -144,8 +144,8 @@ func main() {
 		if err = session.CheckCapacity(); err != nil {
 			fmt.Printf("[!] %s\n", err)
 			switch err {
-			case conf.CapacityFullErr:
-				time.Sleep(1 * time.Second)
+			case conf.CapacityFullErr, conf.LimitedErr, conf.LimitedErr1:
+				time.Sleep(500 * time.Millisecond)
 				goto CapacityLoop
 			default:
 				goto CartLoop

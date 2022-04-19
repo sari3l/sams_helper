@@ -24,8 +24,8 @@ type List struct {
 	Disabled      bool   `json:"disabled"`
 	CloseDate     string `json:"closeDate"`
 	CloseTime     string `json:"closeTime"`
-	StartRealTime string `json:"startRealTime"` //1649984400000
-	EndRealTime   string `json:"endRealTime"`   //1650016800000
+	StartRealTime string `json:"startRealTime"`
+	EndRealTime   string `json:"endRealTime"`
 }
 
 type Capacity struct {
@@ -81,7 +81,6 @@ func unixToTime(timestamp string) string {
 func (session *Session) SetCapacity() error {
 	session.SettleDeliveryInfo = SettleDeliveryInfo{}
 	isSet := false
-	bruteStatus := false
 	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
 		var _end []string
 		session.SettleDeliveryInfo.DeliveryType = session.Setting.DeliveryType
@@ -95,11 +94,10 @@ func (session *Session) SetCapacity() error {
 		if len(_end) >= 3 {
 			session.SettleDeliveryInfo.ExpectArrivalEndTime = _end[len(_end)-2]
 			fmt.Printf("爆破配送时间范围：%s - %s\n", unixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), unixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime))
-			bruteStatus = true
 			isSet = true
 		}
 	}
-	if !bruteStatus {
+	if !isSet {
 		for _, caps := range session.Capacity.CapCityResponseList {
 			for _, v := range caps.List {
 				fmt.Printf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled)
@@ -149,7 +147,7 @@ func (session *Session) CheckCapacity() error {
 	}
 	err, result := session.Request.POST(CapacityDataAPI, dataStr)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	if err = session.GetCapacity(result); err != nil {

@@ -53,9 +53,9 @@ go run main.go
    - true：在检测有无效商品时自动剔除，继续提交订单（可能会因为金额减少增加运费）。
    - false：会一直检测等待至商品全部有效才会尝试提交订单。
 4. `autoFixPurchaseLimit` 限购数量自动修正
-   - isEnabled: true: 是否开启
-   - fixOffline: true：仅线下修正，只影响最后提交订单数量
-   - fixOnline: true：线上购物车修正，之后重新获取购物车信息
+   - `isEnabled: true` 开启修正
+   - `fixOffline: true` 线下购物车修正，单独开启只影响最后提交订单数量
+   - `fixOnline: true` 线上购物车修正，修正后会重新获取购物车信息
 5. `noticeType = 2` 即 `Mac Sound` 提醒，仅对 OSX 系统有效。
 
 
