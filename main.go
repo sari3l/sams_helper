@@ -15,14 +15,14 @@ func main() {
 	// 初始化设置
 	err, setting := conf.InitSetting()
 	if err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf("[!] %s\n", err)
 		return
 	}
 
 	// 初始化 requests
 	request := requests.Request{}
 	if err = request.InitRequest(setting); err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf("[!] %s\n", err)
 		return
 	}
 
@@ -30,7 +30,7 @@ func main() {
 	fmt.Println("########## 初始化用户信息 ##########")
 	session := sams.Session{}
 	if err = session.InitSession(request, setting); err != nil {
-		fmt.Printf("%s", err)
+		fmt.Printf("[!] %s\n", err)
 		return
 	}
 
@@ -40,7 +40,7 @@ func main() {
 		fmt.Println("########## 切换购物车收货地址 ##########")
 		if err = session.ChooseAddress(); err != nil {
 			if _, ok := err.(net.Error); ok {
-				fmt.Println(conf.ProxyErr)
+				fmt.Printf("[!] %s\n", conf.ProxyErr)
 				return
 			} else {
 				goto AddressLoop
@@ -53,7 +53,7 @@ func main() {
 	StoreLoop:
 		// 获取门店
 		if err = session.GetStoreList(); err != nil {
-			fmt.Printf("%s", err)
+			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
 			time.Sleep(1 * time.Second)
 			goto StoreLoop
 		}
@@ -65,7 +65,7 @@ func main() {
 	CartLoop:
 		// 商品列表获取，与地址挂钩
 		if err = session.CheckCart(); err != nil {
-			fmt.Println(err)
+			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
 			time.Sleep(1 * time.Second)
 			goto CartLoop
 		}
@@ -86,15 +86,10 @@ func main() {
 				}
 				_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
 				fmt.Printf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100)
-			} else {
-				// 无效商品
-				//for index, goods := range v.NormalGoodsList {
-				//	fmt.Printf("----[%v] %s 数量：%v 总价：%d\n", index, goods.SpuId, goods.StoreId, goods.Price)
-				//}
 			}
 		}
 		if len(session.GoodsList) == 0 {
-			fmt.Println(conf.NoGoodsErr)
+			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
 			time.Sleep(1 * time.Second)
 			goto CartLoop
 		}
@@ -104,7 +99,7 @@ func main() {
 			if err != nil {
 				goto CartLoop
 			} else {
-				if isChangedOffline {
+				if isChangedOffline && !isChangedOnline {
 					fmt.Println("[>] 已自动修正当前限购数量，不影响线上购物车信息，将继续执行")
 					goto CartShowLoop
 				}
@@ -119,7 +114,7 @@ func main() {
 		// 商品检查
 		fmt.Printf("########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckGoods(); err != nil {
-			fmt.Println(err)
+			fmt.Printf("[!] %s\n", err)
 			switch err {
 			case conf.OOSErr:
 				goto CartLoop
@@ -147,7 +142,7 @@ func main() {
 		// 运力获取
 		fmt.Printf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
 		if err = session.CheckCapacity(); err != nil {
-			fmt.Println(err)
+			fmt.Printf("[!] %s\n", err)
 			switch err {
 			case conf.CapacityFullErr:
 				time.Sleep(1 * time.Second)
@@ -156,32 +151,40 @@ func main() {
 				goto CartLoop
 			}
 		}
-
-		fmt.Printf("[>] 已自动选择第一条可用的配送时段\n")
+		if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
+			fmt.Printf("[>] 准备爆破提交可配送时段\n")
+		} else {
+			fmt.Printf("[>] 已自动选择第一条可用的配送时段\n")
+		}
 
 	OrderLoop:
 		// 下订单操作
 		fmt.Printf("########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
 		err, order := session.CommitPay()
-		switch err {
-		case nil:
+		if err == nil {
+
 			fmt.Printf("抢购成功，订单号 %s，请前往app付款！", order.OrderNo)
 			err = notice.Do(setting.NoticeSet)
 			if err != nil {
-				fmt.Printf("%s", err)
+				fmt.Printf("[!] %s\n", err)
 			}
 			return
-		case conf.LimitedErr, conf.LimitedErr1:
-			fmt.Println("[!] 立即重试...")
-			goto OrderLoop
-		case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
-			goto CapacityLoop
-		case conf.OOSErr:
-			goto CartLoop
-		case conf.StoreHasClosedError:
-			goto StoreLoop
-		default:
-			goto CapacityLoop
+		} else {
+			fmt.Printf("[!] %s\n", err)
+			switch err {
+			case conf.LimitedErr, conf.LimitedErr1:
+				time.Sleep(100 * time.Millisecond)
+				fmt.Println("[!] 立即重试...")
+				goto OrderLoop
+			case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
+				goto CapacityLoop
+			case conf.OOSErr:
+				goto CartLoop
+			case conf.StoreHasClosedError:
+				goto StoreLoop
+			default:
+				goto CapacityLoop
+			}
 		}
 	}
 }

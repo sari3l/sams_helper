@@ -68,7 +68,7 @@ func (session *Session) parseMiniProgramGoodsInfo(result gjson.Result) (error, F
 		_, normalGoods := parseNormalGoods(v)
 		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, normalGoods)
 		for _, s := range session.StoreList {
-			if normalGoods.StoreId == s.StoreId {
+			if normalGoods.StoreId == s.StoreId && (floorInfo.StoreInfo.StoreType != session.Setting.StoreType) {
 				floorInfo.StoreInfo = StoreInfo{
 					StoreId:                 s.StoreId,
 					StoreType:               s.StoreType,
@@ -88,12 +88,17 @@ func (session *Session) SetCartInfo(result gjson.Result) error {
 	switch session.Setting.DeviceType {
 	case 1:
 		for _, v := range result.Get("data.floorInfoList").Array() {
+			if "失效商品" == v.Get("floorName").Str {
+				continue
+			}
 			_, floor := parseFloorInfo(v)
 			cart.FloorInfoList = append(cart.FloorInfoList, floor)
 		}
 	case 2:
 		for _, v := range result.Get("data.miniProgramGoodsInfo").Array() {
 			_, floor := session.parseMiniProgramGoodsInfo(v)
+			floor.Amount = result.Get("data.selectedAmount").Str
+			floor.Quantity = result.Get("data.selectedNumber").Int()
 			cart.FloorInfoList = append(cart.FloorInfoList, floor)
 		}
 	default:

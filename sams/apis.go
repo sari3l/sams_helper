@@ -69,6 +69,22 @@ type SettleParam struct {
 
 var CapacityDataAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/delivery/portal/getCapacityData"
 
+type CapacityDataParam struct {
+	PerDateList             []string `json:"perDateList"`
+	StoreDeliveryTemplateId string   `json:"storeDeliveryTemplateId"`
+}
+
+type IOSCapacityDataParam struct {
+	CapacityDataParam
+}
+
+type MiniProgramCapacityDataParam struct {
+	CapacityDataParam
+	Uid    string `json:"uid"`
+	AppId  string `json:"appId"`
+	SassId string `json:"sassId"`
+}
+
 // 支付
 
 var CommitPayAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/commitPay"
@@ -111,4 +127,5 @@ type MiniProgramCommitPayParam struct {
 	LabelList             string `json:"labelList"`
 	IsSelectShoppingNotes bool   `json:"isSelectShoppingNotes"`
 	SaasId                string `json:"saasId"`
+	AppId                 string `json:"appId"`
 }

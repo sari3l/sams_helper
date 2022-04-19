@@ -106,7 +106,7 @@ func (session *Session) CheckGoods() error {
 		fmt.Printf("\n======== 以下商品已过期 ========\n")
 		for index, v := range result.Get("data.popUpInfo.goodsList").Array() {
 			_, goods := parseNormalGoods(v)
-			fmt.Printf("[%v] 商品ID：%s 商店ID：%v 总价：%d.%d\n", index, goods.SpuId, goods.StoreId, goods.Price/100, goods.Price%100)
+			fmt.Printf("[%v] 商品名：%s 商品ID：%s 商店ID：%v 总价：%d.%d\n", index, goods.GoodsName, goods.SpuId, goods.StoreId, goods.Price/100, goods.Price%100)
 		}
 		if session.Setting.IgnoreInvalid {
 			return nil

@@ -76,9 +76,9 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 			CommitPayParam:        _data,
 			Amount:                _amount,
 			IsSelectShoppingNotes: true,
-
-			LabelList: "",
-			SaasId:    "1818",
+			LabelList:             "",
+			SaasId:                session.Setting.SassId,
+			AppId:                 "",
 		}
 		dataStr, _ = json.Marshal(data)
 	default: // ios

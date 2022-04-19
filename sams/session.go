@@ -13,7 +13,6 @@ type Session struct {
 	Address            Address            `json:"address"`
 	Uid                string             `json:"uid"`
 	SettleInfo         SettleInfo         `json:"settleInfo"`
-	Store              Store              `json:"store"`
 	StoreList          []Store            `json:"store-list"`
 	Cart               Cart               `json:"cart"`
 	FloorInfo          FloorInfo          `json:"floorInfo"`

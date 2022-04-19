@@ -1,11 +1,16 @@
 # 山姆会员 Token
 authToken: "<authToken>"
+# 运力暴力模式
+bruteCapacity: true
 # 设备类型 Header
 # 1->IOS | 2-> 小程序
 deviceType: 1
 # 配送方式
 # 1->极速达 | 2->全城配
 deliveryType: 2
+# 商店类型
+# 2->生鲜直达 | 4->极速达 | 8->全球购保税
+storeType: 2
 # 商品类型
 # 1->普通商品 | 2->全球购商品
 floorId: 1
@@ -21,12 +26,14 @@ autoFixPurchaseLimit:
   fixOnline: false
 # 运力搜索时间跨度（日）
 perDateLen : 7
+# SaasId 无需改动
+saasId: "1818"
 # 代理设置
 proxySet:
   # 是否开启代理
-  isEnabled: true
+  isEnabled: false
   # 代理 URL
-  proxyUrl: "http://127.0.0.1:9091"
+  proxyUrl: "http://127.0.0.1:8080"
 
 # 通知设置
 noticeSet:

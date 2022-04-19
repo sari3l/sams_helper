@@ -19,12 +19,15 @@ type AutoFixPurchaseLimitSet struct {
 
 type Setting struct {
 	AuthToken               string                  `yaml:"authToken"`
+	BruteCapacity           bool                    `yaml:"bruteCapacity"`
 	DeviceType              int64                   `yaml:"deviceType"`
 	DeliveryType            int64                   `yaml:"deliveryType"`
+	StoreType               int64                   `yaml:"storeType"`
 	FloorId                 int64                   `yaml:"floorId"`
 	IgnoreInvalid           bool                    `yaml:"ignoreInvalid"`
 	AutoFixPurchaseLimitSet AutoFixPurchaseLimitSet `yaml:"autoFixPurchaseLimit"`
 	PerDateLen              int                     `yaml:"perDateLen"`
+	SassId                  string                  `yaml:"sassId"`
 	ProxySet                ProxySet                `yaml:"proxySet"`
 	NoticeSet               notice.NoticerSet       `yaml:"noticeSet"`
 }

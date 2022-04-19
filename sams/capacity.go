@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
+	"strconv"
 	"time"
 )
 
@@ -71,23 +72,49 @@ func (session *Session) GetCapacity(result gjson.Result) error {
 	return nil
 }
 
+func unixToTime(timestamp string) string {
+	_time, _ := strconv.ParseInt(timestamp, 0, 64)
+	tm := time.Unix(_time/1000, _time%1000)
+	return fmt.Sprintf("%s", tm.Format("2006-01-02 03:04:05 PM"))
+}
+
 func (session *Session) SetCapacity() error {
 	session.SettleDeliveryInfo = SettleDeliveryInfo{}
 	isSet := false
-	for _, caps := range session.Capacity.CapCityResponseList {
-		for _, v := range caps.List {
-			fmt.Printf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled)
-			if v.TimeISFull == false && v.Disabled == false && session.SettleDeliveryInfo.ExpectArrivalTime == "" {
-				session.SettleDeliveryInfo.ExpectArrivalTime = v.StartRealTime
-				session.SettleDeliveryInfo.ExpectArrivalEndTime = v.EndRealTime
-				isSet = true
-				break
+	bruteStatus := false
+	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
+		var _end []string
+		session.SettleDeliveryInfo.DeliveryType = session.Setting.DeliveryType
+		session.SettleDeliveryInfo.DeliveryName = session.Capacity.CapCityResponseList[0].StrDate
+		session.SettleDeliveryInfo.ExpectArrivalTime = session.Capacity.CapCityResponseList[0].List[0].StartRealTime
+		for _, caps := range session.Capacity.CapCityResponseList {
+			for _, v := range caps.List {
+				_end = append(_end, v.EndRealTime)
 			}
 		}
-		if isSet {
-			session.SettleDeliveryInfo.DeliveryType = session.Setting.DeliveryType
-			session.SettleDeliveryInfo.DeliveryName = caps.StrDate
-			break
+		if len(_end) >= 3 {
+			session.SettleDeliveryInfo.ExpectArrivalEndTime = _end[len(_end)-2]
+			fmt.Printf("爆破配送时间范围：%s - %s\n", unixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), unixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime))
+			bruteStatus = true
+			isSet = true
+		}
+	}
+	if !bruteStatus {
+		for _, caps := range session.Capacity.CapCityResponseList {
+			for _, v := range caps.List {
+				fmt.Printf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled)
+				if v.TimeISFull == false && v.Disabled == false && !isSet {
+					session.SettleDeliveryInfo.ExpectArrivalTime = v.StartRealTime
+					session.SettleDeliveryInfo.ExpectArrivalEndTime = v.EndRealTime
+					isSet = true
+					break
+				}
+			}
+			if isSet {
+				session.SettleDeliveryInfo.DeliveryType = session.Setting.DeliveryType
+				session.SettleDeliveryInfo.DeliveryName = caps.StrDate
+				break
+			}
 		}
 	}
 	if isSet {
@@ -97,26 +124,39 @@ func (session *Session) SetCapacity() error {
 }
 
 func (session *Session) CheckCapacity() error {
-	data := make(map[string]interface{})
+	var dataStr []byte
 	var perDateList []string
 	for i := 0; i <= session.Setting.PerDateLen; i++ {
 		perDateList = append(perDateList, time.Now().AddDate(0, 0, i).Format("2006-01-02"))
 	}
-	data["perDateList"] = perDateList
-	data["storeDeliveryTemplateId"] = session.Cart.FloorInfoList[0].StoreInfo.StoreDeliveryTemplateId
-	dataStr, _ := json.Marshal(data)
+	_data := CapacityDataParam{}
+	_data.PerDateList = perDateList
+	_data.StoreDeliveryTemplateId = session.Cart.FloorInfoList[0].StoreInfo.StoreDeliveryTemplateId
+	switch session.Setting.DeviceType {
+	case 2:
+		data := MiniProgramCapacityDataParam{
+			CapacityDataParam: _data,
+			Uid:               session.Uid,
+			AppId:             "",
+			SassId:            session.Setting.SassId,
+		}
+		dataStr, _ = json.Marshal(data)
+	default: // ios
+		data := IOSCapacityDataParam{
+			CapacityDataParam: _data,
+		}
+		dataStr, _ = json.Marshal(data)
+	}
 	err, result := session.Request.POST(CapacityDataAPI, dataStr)
 	if err != nil {
 		return nil
 	}
 
-	err = session.GetCapacity(result)
-	if err != nil {
+	if err = session.GetCapacity(result); err != nil {
 		return err
 	}
 
-	err = session.SetCapacity()
-	if err != nil {
+	if err = session.SetCapacity(); err != nil {
 		return err
 	}
 	return nil
