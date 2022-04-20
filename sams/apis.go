@@ -41,6 +41,13 @@ type ModifyCartGoodsInfoParam struct {
 	Uid           string `json:"uid"`
 }
 
+var AddCartGoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/addCartGoodsInfo"
+
+type AddCartGoodsInfoParam struct {
+	CartGoodsInfoList []AddCartGoods `json:"cartGoodsInfoList"`
+	Uid               string         `json:"uid"`
+}
+
 // 商品
 
 var GoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/checkGoodsInfo"
@@ -128,4 +135,17 @@ type MiniProgramCommitPayParam struct {
 	IsSelectShoppingNotes bool   `json:"isSelectShoppingNotes"`
 	SaasId                string `json:"saasId"`
 	AppId                 string `json:"appId"`
+}
+
+// Page
+
+var GetPageDataAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/decoration/portal/show/getPageData"
+
+type GetPageDataParam struct {
+	Uid           string  `json:"uid"`
+	PageContentId string  `json:"pageContentId"`
+	Authorize     bool    `json:"authorize"`
+	Latitude      string  `json:"latitude"`
+	Longitude     string  `json:"longitude"`
+	AddressInfo   Address `json:"addressInfo"`
 }

@@ -34,24 +34,31 @@ func main() {
 		return
 	}
 
-	for true {
-	AddressLoop:
-		// 选取收货地址
-		fmt.Println("########## 切换购物车收货地址 ##########")
-		if err = session.ChooseAddress(); err != nil {
-			if _, ok := err.(net.Error); ok {
-				fmt.Printf("[!] %s\n", conf.ProxyErr)
-				return
-			} else {
-				goto AddressLoop
-			}
+	// 设置支付方式
+	if err = session.ChoosePayment(); err != nil {
+		fmt.Printf("[!] %s\n", err)
+		return
+	}
+AddressLoop:
+	// 选取收货地址
+	fmt.Println("########## 切换购物车收货地址 ##########")
+	if err = session.ChooseAddress(); err != nil {
+		if _, ok := err.(net.Error); ok {
+			fmt.Printf("[!] %s\n", conf.ProxyErr)
+			return
 		} else {
-			fmt.Println("[>] 切换成功!")
-			fmt.Printf("[>] %s %s %s %s %s", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
+			goto AddressLoop
 		}
+	} else {
+		fmt.Println("[>] 切换成功!")
+		fmt.Printf("[>] %s %s %s %s %s\n", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
+	}
 
+ModeEnter:
+	if session.Setting.RunMode == 1 || session.Setting.RunMode == 99 {
 	StoreLoop:
 		// 获取门店
+		fmt.Printf("########## 获取就近商店信息 ###########\n")
 		if err = session.GetStoreList(); err != nil {
 			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
 			time.Sleep(1 * time.Second)
@@ -72,9 +79,13 @@ func main() {
 	CartShowLoop:
 		fmt.Printf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
 		session.GoodsList = make([]sams.Goods, 0)
+		_supplyCheck := false
 		for _, v := range session.Cart.FloorInfoList {
 			if v.FloorId == session.FloorId {
 				for index, goods := range v.NormalGoodsList {
+					if session.Setting.RunMode == 99 && goods.SpuId == session.Setting.GoodSpuId {
+						_supplyCheck = true
+					}
 					session.GoodsList = append(session.GoodsList, goods.ToGoods())
 					fmt.Printf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100)
 				}
@@ -87,6 +98,11 @@ func main() {
 				_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
 				fmt.Printf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100)
 			}
+		}
+
+		if session.Setting.RunMode == 99 && !_supplyCheck {
+			session.Setting.RunMode = 2
+			goto ModeEnter
 		}
 		if len(session.GoodsList) == 0 {
 			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
@@ -116,7 +132,7 @@ func main() {
 		if err = session.CheckGoods(); err != nil {
 			fmt.Printf("[!] %s\n", err)
 			switch err {
-			case conf.OOSErr:
+			case conf.OutOfSellErr:
 				goto CartLoop
 			default:
 				time.Sleep(500 * time.Millisecond)
@@ -178,7 +194,7 @@ func main() {
 				goto OrderLoop
 			case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
 				goto CapacityLoop
-			case conf.OOSErr:
+			case conf.OutOfSellErr:
 				goto CartLoop
 			case conf.StoreHasClosedError:
 				goto StoreLoop
@@ -186,5 +202,47 @@ func main() {
 				goto CapacityLoop
 			}
 		}
+	} else if session.Setting.RunMode == 2 {
+	GetGoodsLoop:
+		fmt.Printf("########## 获取保供商品【%s】 ###########\n", time.Now().Format("15:04:05"))
+		validGoods := sams.NormalGoodsV2{}
+		err, goodsList := session.GetGuaranteedSupplyGoods()
+		if err != nil {
+			fmt.Printf("[!] 保供监控错误：%s\n", err)
+			time.Sleep(1 * time.Second)
+			goto GetGoodsLoop
+		} else {
+			if len(goodsList) == 0 {
+				fmt.Println("[!] 未上架保供商品")
+				time.Sleep(1 * time.Second)
+				goto GetGoodsLoop
+			}
+		}
+
+		for index, v := range goodsList {
+			fmt.Printf("[%v] %s 数量：%v 单价：%d.%d 详情：%s\n", index, v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
+			if v.StockQuantity > 0 {
+				validGoods = v
+				break
+			}
+		}
+
+		if validGoods.Title == "" {
+			time.Sleep(1 * time.Second)
+			goto GetGoodsLoop
+		} else {
+			fmt.Printf("[>] 发现可购保供商品: %s, 即将自动添加并下单\n", validGoods.Title)
+			// 自动添加购物车
+			_goodList := []sams.AddCartGoods{validGoods.ToAddCartGoods()}
+			if err = session.AddCartGoodsInfo(_goodList); err != nil {
+				fmt.Printf("[!] %s\n", err)
+			}
+			session.Setting.GoodSpuId = validGoods.SpuId
+			session.Setting.RunMode = 99
+			goto ModeEnter
+		}
+
+	} else {
+		fmt.Printf("[!] %s\n", conf.RunModeErr)
 	}
 }

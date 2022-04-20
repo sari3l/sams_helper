@@ -121,6 +121,19 @@ func (session *Session) ModifyCartGoodsInfo(goods Goods) error {
 	return nil
 }
 
+func (session *Session) AddCartGoodsInfo(addGoodsList []AddCartGoods) error {
+	data := AddCartGoodsInfoParam{
+		CartGoodsInfoList: addGoodsList,
+		Uid:               session.Uid,
+	}
+	dataStr, _ := json.Marshal(data)
+	err, _ := session.Request.POST(AddCartGoodsInfoAPI, dataStr)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (session *Session) FixCart() (error, bool, bool) {
 	isChangedOffline := false
 	isChangedOnline := false

@@ -1,5 +1,8 @@
 # 山姆会员 Token
 authToken: "<authToken>"
+# 运行模式
+# 1-> 山姆抢购 | 2->保供抢购
+runMode: 1
 # 运力暴力模式
 bruteCapacity: true
 # 设备类型 Header

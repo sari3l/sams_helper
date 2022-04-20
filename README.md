@@ -12,6 +12,7 @@
 
 ```yaml
 authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
+runMode: 1                      # (未正式上线，请看注意事项) 1-> 山姆抢购，2->保供抢购
 bruteCapacity: false            # 运力爆破模式，开启则会尝试覆盖所有时间
 deliveryType: 2                 # 1->极速达，2->全城配
 ignoreInvalid: true             # 是否忽略无效商品
@@ -45,18 +46,19 @@ go run main.go
 
 ## 注意
 
-1. `bruteCapacity: true` 开启运力暴力模式
+1. `runMode: 2` 即`保供自动抢单`模式尚未正式上线，仅支持从`源代码`运行
+2. `bruteCapacity: true` 开启运力暴力模式
    1. 暴力模式会通过`全城配`来下单，可能导致最终订单内取消部分`极速达`商品（具体可通过查看移动端购物车`全城配`即为最终订单商品列表）。
    2. 覆盖`所有时间`有些歧义，因为山姆策略已有所修改，但理论上还是这个意思。**同时注意可能随时因为山姆策略修改导致失效。**
-2. 如果购物车里同时存在`极速达`、`全城配`商品，若`deliveryType = 2`，则会尝试通过全城配购买极速达货物（可能无货）。
-3. `ignoreInvalid`
+3. 如果购物车里同时存在`极速达`、`全城配`商品，若`deliveryType = 2`，则会尝试通过全城配购买极速达货物（可能无货）。
+4. `ignoreInvalid` 忽略无效商品
    - true：在检测有无效商品时自动剔除，继续提交订单（可能会因为金额减少增加运费）。
    - false：会一直检测等待至商品全部有效才会尝试提交订单。
-4. `autoFixPurchaseLimit` 限购数量自动修正
+5. `autoFixPurchaseLimit` 限购数量自动修正
    - `isEnabled: true` 开启修正
    - `fixOffline: true` 线下购物车修正，单独开启只影响最后提交订单数量
    - `fixOnline: true` 线上购物车修正，修正后会重新获取购物车信息
-5. `noticeType = 2` 即 `Mac Sound` 提醒，仅对 OSX 系统有效。
+6. `noticeType = 2` 即 `Mac Sound` 提醒，仅对 OSX 系统有效。
 
 
 ### 疑似问题
@@ -65,6 +67,7 @@ go run main.go
 
 ## 更新：
 
+- 2022年04月20日 添加`保供自动抢单`模块
 - 2022年04月19日 添加`运力暴力模式`模块
 - 2022年04月18日 添加`Server酱`提醒模块
 - 2022年04月16日 添加`小程序模拟`模式方式

@@ -94,7 +94,7 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 		case "DECREASE_CAPACITY_COUNT_ERROR":
 			return conf.DecreaseCapacityCountError, gjson.Result{}
 		case "OUT_OF_STOCK":
-			return conf.OOSErr, gjson.Result{}
+			return conf.OutOfSellErr, gjson.Result{}
 		case "NOT_DELIVERY_CAPACITY_ERROR":
 			return conf.NotDeliverCapCityErr, gjson.Result{}
 		case "STORE_HAS_CLOSED":

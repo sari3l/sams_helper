@@ -19,6 +19,7 @@ type AutoFixPurchaseLimitSet struct {
 
 type Setting struct {
 	AuthToken               string                  `yaml:"authToken"`
+	RunMode                 int                     `yaml:"runMode"`
 	BruteCapacity           bool                    `yaml:"bruteCapacity"`
 	DeviceType              int64                   `yaml:"deviceType"`
 	DeliveryType            int64                   `yaml:"deliveryType"`
@@ -30,6 +31,7 @@ type Setting struct {
 	SassId                  string                  `yaml:"sassId"`
 	ProxySet                ProxySet                `yaml:"proxySet"`
 	NoticeSet               notice.NoticerSet       `yaml:"noticeSet"`
+	GoodSpuId               string
 }
 
 func InitSetting() (error, Setting) {

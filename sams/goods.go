@@ -15,6 +15,33 @@ type Goods struct {
 	StoreType  int64  `json:"storeType"`
 }
 
+type AddCartGoods struct {
+	IsSelected       bool   `json:"isSelected"`
+	IncreaseQuantity int64  `json:"increaseQuantity"`
+	SpuId            string `json:"spuId"`
+	StoreId          string `json:"storeId"`
+	LabelList        string `json:"labelList"`
+}
+
+func (goods NormalGoodsV2) ToAddCartGoods() AddCartGoods {
+	return AddCartGoods{
+		IsSelected:       true,
+		IncreaseQuantity: 1,
+		SpuId:            goods.SpuId,
+		StoreId:          goods.StoreId,
+		LabelList:        "",
+	}
+}
+
+type NormalGoodsV2 struct {
+	SpuId         string `json:"spuId"`
+	StoreId       string `json:"storeId"`
+	Title         string `json:"title"`
+	SubTitle      string `json:"subTitle"`
+	Price         int64  `json:"price"`
+	StockQuantity int64  `json:"stockQuantity"`
+}
+
 func (this NormalGoods) ToGoods() Goods {
 	return Goods{
 		IsSelected: true,
@@ -111,7 +138,7 @@ func (session *Session) CheckGoods() error {
 		if session.Setting.IgnoreInvalid {
 			return nil
 		} else {
-			return conf.OOSErr
+			return conf.OutOfSellErr
 		}
 	}
 }

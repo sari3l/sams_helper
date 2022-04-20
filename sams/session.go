@@ -42,11 +42,5 @@ func (session *Session) CheckSession() error {
 		return err
 	}
 
-	// 设置支付方式
-	err = session.ChoosePayment()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }

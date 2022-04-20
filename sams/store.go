@@ -2,21 +2,21 @@ package sams
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/tidwall/gjson"
 )
 
 type Store struct {
-	StoreId                 string `json:"storeId"`
-	StoreName               string `json:"storeName"`
-	StoreAddress            string `json:"storeAddress"`
-	StoreType               int64  `json:"storeType"`
-	DeliveryModeId          string `json:"deliveryModeId"`
-	StoreDeliveryTemplateId string `json:"storeDeliveryTemplateId"`
-	AreaBlockId             string `json:"areaBlockId"`
+	StoreId                 string  `json:"storeId"`
+	StoreName               string  `json:"storeName"`
+	StoreAddress            string  `json:"storeAddress"`
+	StoreType               int64   `json:"storeType"`
+	DeliveryModeId          string  `json:"deliveryModeId"`
+	StoreDeliveryTemplateId string  `json:"storeDeliveryTemplateId"`
+	AreaBlockId             string  `json:"areaBlockId"`
+	AllDeliveryAttrList     []int64 `json:"allDeliveryAttrList"`
 }
 
-func (session *Session) parseStore(storeData gjson.Result) (error, Store) {
+func parseStore(storeData gjson.Result) (error, Store) {
 	store := Store{}
 	store.StoreId = storeData.Get("storeId").Str
 	store.StoreName = storeData.Get("storeName").Str
@@ -25,11 +25,15 @@ func (session *Session) parseStore(storeData gjson.Result) (error, Store) {
 	store.DeliveryModeId = storeData.Get("storeDeliveryModeVerifyData.deliveryModeId").Str
 	store.StoreDeliveryTemplateId = storeData.Get("storeRecmdDeliveryTemplateData.storeDeliveryTemplateId").Str
 	store.AreaBlockId = storeData.Get("storeAreaBlockVerifyData.areaBlockId").Str
+	_attrList := make([]int64, 0)
+	for _, v := range storeData.Get("allDeliveryAttrList").Array() {
+		_attrList = append(_attrList, v.Int())
+	}
+	store.AllDeliveryAttrList = _attrList
 	return nil, store
 }
 
 func (session *Session) GetStoreList() error {
-	fmt.Printf("\n########## 获取就近商店信息 ###########\n")
 	data := StoreListParam{
 		Longitude: session.Address.Longitude,
 		Latitude:  session.Address.Latitude,
@@ -42,7 +46,7 @@ func (session *Session) GetStoreList() error {
 	}
 	storeList := make([]Store, 0)
 	for _, storeData := range result.Get("data.storeList").Array() {
-		err, store := session.parseStore(storeData)
+		err, store := parseStore(storeData)
 		if err != nil {
 			return err
 		}
