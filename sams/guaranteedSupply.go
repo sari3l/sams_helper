@@ -12,7 +12,7 @@ func parseNormalGoodsV2(result gjson.Result) (error, NormalGoodsV2) {
 	normalGoods.Title = result.Get("title").Str
 	normalGoods.SubTitle = result.Get("subTitle").Str
 	for _, v := range result.Get("priceInfo").Array() {
-		if v.Get("priceTypeName").Str == "销售价" {
+		if priceStr := v.Get("priceTypeName").Str; priceStr == "销售价" || priceStr == "锁价" {
 			price, _ := strconv.ParseInt(v.Get("price").Str, 10, 64)
 			normalGoods.Price = price
 		}

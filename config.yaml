@@ -3,6 +3,12 @@ authToken: "<authToken>"
 # 运行模式
 # 1-> 山姆抢购 | 2->保供抢购
 runMode: 1
+# 保供抢购排除关键字
+supplyExcludeSet:
+  # 是否开启
+  isEnabled: false
+  # 排除含有以下关键字的内容，例：["蔬菜", "保供套餐C"]
+  keyWords: [""]
 # 运力暴力模式
 bruteCapacity: true
 # 设备类型 Header

@@ -8,6 +8,7 @@ import (
 	"sams_helper/requests"
 	"sams_helper/sams"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -220,6 +221,20 @@ ModeEnter:
 		}
 
 		for index, v := range goodsList {
+			if session.Setting.SupplyExcludeSet.IsEnabled {
+				isBlack := false
+				for _, keyWord := range session.Setting.SupplyExcludeSet.KeyWords {
+					if len(keyWord) > 0 && strings.Contains(v.Title, keyWord) {
+						fmt.Printf("[已忽略此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
+						isBlack = true
+						break
+					}
+				}
+				if isBlack {
+					continue
+				}
+			}
+
 			fmt.Printf("[%v] %s 数量：%v 单价：%d.%d 详情：%s\n", index, v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
 			if v.StockQuantity > 0 {
 				validGoods = v
