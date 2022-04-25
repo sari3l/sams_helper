@@ -17,7 +17,8 @@ type AutoFixPurchaseLimitSet struct {
 	FixOnline  bool `yaml:"fixOnline"`
 }
 
-type SupplyExcludeSet struct {
+type SupplySet struct {
+	Mode      int      `yaml:"mode"`
 	IsEnabled bool     `yaml:"isEnabled"`
 	KeyWords  []string `yaml:"keyWords"`
 }
@@ -25,7 +26,7 @@ type SupplyExcludeSet struct {
 type Setting struct {
 	AuthToken               string                  `yaml:"authToken"`
 	RunMode                 int                     `yaml:"runMode"`
-	SupplyExcludeSet        SupplyExcludeSet        `yaml:"supplyExcludeSet"`
+	SupplySet               SupplySet               `yaml:"supplySet"`
 	BruteCapacity           bool                    `yaml:"bruteCapacity"`
 	DeviceType              int64                   `yaml:"deviceType"`
 	DeliveryType            int64                   `yaml:"deliveryType"`

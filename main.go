@@ -221,16 +221,20 @@ ModeEnter:
 		}
 
 		for index, v := range goodsList {
-			if session.Setting.SupplyExcludeSet.IsEnabled {
+			if session.Setting.SupplySet.IsEnabled {
 				isBlack := false
-				for _, keyWord := range session.Setting.SupplyExcludeSet.KeyWords {
-					if len(keyWord) > 0 && strings.Contains(v.Title, keyWord) {
-						fmt.Printf("[已忽略此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
+				isWhite := false
+				for _, keyWord := range session.Setting.SupplySet.KeyWords {
+					if len(keyWord) > 0 && session.Setting.SupplySet.Mode == 2 && strings.Contains(v.Title, keyWord) {
 						isBlack = true
+						break
+					} else if len(keyWord) > 0 && session.Setting.SupplySet.Mode == 1 && strings.Contains(v.Title, keyWord) {
+						isWhite = true
 						break
 					}
 				}
-				if isBlack {
+				if (session.Setting.SupplySet.Mode == 2 && isBlack) || (session.Setting.SupplySet.Mode == 1 && !isWhite) {
+					fmt.Printf("[已忽略此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
 					continue
 				}
 			}

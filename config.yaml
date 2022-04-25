@@ -1,18 +1,20 @@
 # 山姆会员 Token
 authToken: "<authToken>"
 # 运行模式
-# 1-> 山姆抢购 | 2->保供抢购
+# 1->山姆抢购 | 2->保供抢购
 runMode: 1
-# 保供抢购排除关键字
-supplyExcludeSet:
+# 保供抢购关键字黑白名单筛选
+supplySet:
+  # 1->白名单 | 2->黑名单
+  mode: 1
   # 是否开启
   isEnabled: false
-  # 排除含有以下关键字的内容，例：["蔬菜", "保供套餐C"]
-  keyWords: [""]
+  # 检测有以下关键字的内容，例：["蔬菜", "保供套餐C"]
+  keyWords: ["A"]
 # 运力暴力模式
 bruteCapacity: true
 # 设备类型 Header
-# 1->IOS | 2-> 小程序
+# 1->IOS | 2->小程序
 deviceType: 1
 # 配送方式
 # 1->极速达 | 2->全城配

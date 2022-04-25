@@ -2,7 +2,6 @@ package sams
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/tidwall/gjson"
 	"strconv"
 )
@@ -96,11 +95,5 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 	if err != nil {
 		return err, OrderInfo{}
 	}
-	if session.Setting.DeviceType == 2 {
-		return session.GetOrderInfo(result)
-	} else if session.Setting.DeviceType == 1 && result.Get("data.isSuccess").Bool() {
-		return session.GetOrderInfo(result)
-	} else {
-		return errors.New(result.Get("data.failReason").Str), OrderInfo{}
-	}
+	return session.GetOrderInfo(result)
 }
