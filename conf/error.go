@@ -2,12 +2,16 @@ package conf
 
 import "errors"
 
+var GotoCartStep = errors.New("跳转购物车")
+var GotoStoreStep = errors.New("跳转商店")
+var GotoCapacityStep = errors.New("跳转运力")
+
+var RunModeErr = errors.New("运行模式错误，请检查配置")
 var AuthTokenErr = errors.New("auth-token 可能未设置，请检查")
 var ProxyErr = errors.New("网络错误，请检查是否设置错误代理")
 var NoValidAddressErr = errors.New("没有有效的收货地址，请前往 APP 添加或者检查 Auth-Token 是否正确")
 var NoGoodsErr = errors.New("当前购物车中无有效商品")
 var FixCartErr = errors.New("修正购物车列表限购商品数量失败")
-var RunModeErr = errors.New("运行模式错误，请检查配置")
 var NoValidCouponErr = errors.New("没有查询到有效的优惠券，跳过此步骤")
 var NoChooseCouponErr = errors.New("输入异常或未选取优惠券，将继续执行")
 

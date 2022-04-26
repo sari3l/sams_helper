@@ -53,3 +53,17 @@ func InputString(_len int) []int {
 	}
 	return index
 }
+
+func OutputBytes(content []byte) {
+	f := bufio.NewWriter(os.Stdout)
+	defer func(f *bufio.Writer) {
+		err := f.Flush()
+		if err != nil {
+			return
+		}
+	}(f)
+	_, err := f.Write(content)
+	if err != nil {
+		return
+	}
+}

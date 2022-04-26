@@ -38,7 +38,6 @@ type Setting struct {
 	SassId                  string                  `yaml:"sassId"`
 	ProxySet                ProxySet                `yaml:"proxySet"`
 	NoticeSet               notice.NoticerSet       `yaml:"noticeSet"`
-	GoodSpuId               string
 }
 
 func InitSetting() (error, Setting) {

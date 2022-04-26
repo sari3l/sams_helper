@@ -71,7 +71,8 @@ func (session *Session) GetCapacity(result gjson.Result) error {
 	return nil
 }
 
-func (session *Session) SetCapacity() error {
+func (session *Session) SetCapacity(tryTime int) (error, []byte) {
+	var c []byte
 	session.SettleDeliveryInfo = SettleDeliveryInfo{}
 	isSet := false
 	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
@@ -84,16 +85,17 @@ func (session *Session) SetCapacity() error {
 				_end = append(_end, v.EndRealTime)
 			}
 		}
-		if len(_end) >= 3 {
-			session.SettleDeliveryInfo.ExpectArrivalEndTime = _end[len(_end)-2]
-			fmt.Printf("爆破配送时间范围：%s - %s\n", conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime))
+		if len(_end) >= tryTime {
+			session.SettleDeliveryInfo.ExpectArrivalEndTime = _end[len(_end)-tryTime]
+			c = append(c, []byte(fmt.Sprintf("爆破配送时间范围：%s - %s\n", conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime)))...)
 			isSet = true
 		}
 	}
+
 	if !isSet {
 		for _, caps := range session.Capacity.CapCityResponseList {
 			for _, v := range caps.List {
-				fmt.Printf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled)
+				c = append(c, []byte(fmt.Sprintf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled))...)
 				if v.TimeISFull == false && v.Disabled == false && !isSet {
 					session.SettleDeliveryInfo.ExpectArrivalTime = v.StartRealTime
 					session.SettleDeliveryInfo.ExpectArrivalEndTime = v.EndRealTime
@@ -109,12 +111,12 @@ func (session *Session) SetCapacity() error {
 		}
 	}
 	if isSet {
-		return nil
+		return nil, c
 	}
-	return conf.CapacityFullErr
+	return conf.CapacityFullErr, nil
 }
 
-func (session *Session) CheckCapacity() error {
+func (session *Session) CheckCapacity(tryTime int) (error, []byte) {
 	var dataStr []byte
 	var perDateList []string
 	for i := 0; i <= session.Setting.PerDateLen; i++ {
@@ -140,15 +142,16 @@ func (session *Session) CheckCapacity() error {
 	}
 	err, result := session.Request.POST(CapacityDataAPI, dataStr)
 	if err != nil {
-		return err
+		return err, nil
 	}
 
 	if err = session.GetCapacity(result); err != nil {
-		return err
+		return err, nil
 	}
 
-	if err = session.SetCapacity(); err != nil {
-		return err
+	err, content := session.SetCapacity(tryTime)
+	if err != nil {
+		return err, nil
 	}
-	return nil
+	return nil, content
 }

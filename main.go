@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"sams_helper/conf"
@@ -13,259 +14,362 @@ import (
 )
 
 func main() {
-	// 初始化设置
-	err, setting := conf.InitSetting()
+	err, session := doInitStep()
 	if err != nil {
 		fmt.Printf("[!] %s\n", err)
 		return
 	}
 
+	if session.Setting.RunMode == 2 {
+		go stepSupply(&session)
+	}
+
+	if err = doBuyStep(&session); err != nil {
+		fmt.Printf("[!] %s\n", err)
+		return
+	}
+}
+
+func doInitStep() (error, sams.Session) {
+	// 初始化设置
+	err, setting := conf.InitSetting()
+	if err != nil {
+		return err, sams.Session{}
+	}
+
+	if !(setting.RunMode == 1 || setting.RunMode == 2) {
+		return conf.RunModeErr, sams.Session{}
+	}
 	// 初始化 requests
 	request := requests.Request{}
 	if err = request.InitRequest(setting); err != nil {
-		fmt.Printf("[!] %s\n", err)
-		return
+		return err, sams.Session{}
 	}
 
 	// 初始化用户信息
 	fmt.Println("########## 初始化用户信息 ##########")
 	session := sams.Session{}
 	if err = session.InitSession(request, setting); err != nil {
-		fmt.Printf("[!] %s\n", err)
-		return
+		return err, sams.Session{}
 	}
 
 	// 设置支付方式
 	if err = session.ChoosePayment(); err != nil {
-		fmt.Printf("[!] %s\n", err)
-		return
+		return err, sams.Session{}
 	}
+
+	// 选择收货地址
+	if err = stepAddress(&session); err != nil {
+		return err, sams.Session{}
+	}
+
+	// 选择优惠券
+	if err = stepCoupon(&session); err != nil {
+		return err, sams.Session{}
+	}
+
+	return nil, session
+}
+
+func doBuyStep(session *sams.Session) error {
+stepStoreLoop:
+	if err := stepStore(session); err != nil {
+		return err
+	}
+stepCartLoop:
+	if err := stepCart(session); err != nil {
+		return err
+	}
+	if err := stepGoods(session); err != nil {
+		if err == conf.GotoStoreStep {
+			goto stepStoreLoop
+		} else {
+			return err
+		}
+	}
+stepCapacityLoop:
+	if err := stepCapacity(session); err != nil {
+		if err == conf.GotoCartStep {
+			goto stepCartLoop
+		}
+	}
+	if err := stepOrder(session); err != nil {
+		if err == conf.GotoStoreStep {
+			goto stepStoreLoop
+		} else if err == conf.GotoCartStep {
+			goto stepCartLoop
+		} else if err == conf.GotoCapacityStep {
+			goto stepCapacityLoop
+		}
+	}
+
+	return nil
+}
+
+func stepAddress(session *sams.Session) error {
 AddressLoop:
-	// 选取收货地址
 	fmt.Println("########## 切换购物车收货地址 ##########")
-	if err = session.ChooseAddress(); err != nil {
+	if err := session.ChooseAddress(); err != nil {
 		if _, ok := err.(net.Error); ok {
-			fmt.Printf("[!] %s\n", conf.ProxyErr)
-			return
+			return errors.New(fmt.Sprintf("[!] %s\n", conf.ProxyErr))
 		} else {
 			goto AddressLoop
 		}
 	}
+	return nil
+}
 
-	//CouponLoop:
+func stepCoupon(session *sams.Session) error {
 	fmt.Println("########## 选择使用优惠券 ##########")
-	if err = session.ChooseCoupons(); err != nil {
+	if err := session.ChooseCoupons(); err != nil {
 		fmt.Printf("[!] %s\n", err)
 	}
+	return nil
+}
 
-ModeEnter:
-	if session.Setting.RunMode == 1 || session.Setting.RunMode == 99 {
-	StoreLoop:
-		// 获取门店
-		fmt.Printf("########## 获取就近商店信息 ###########\n")
-		if err = session.GetStoreList(); err != nil {
-			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
-			time.Sleep(1 * time.Second)
-			goto StoreLoop
-		}
+func stepStore(session *sams.Session) error {
+	var c []byte
+	c = append(c, []byte(fmt.Sprintf("########## 获取就近商店信息【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 
-		for index, store := range session.StoreList {
-			fmt.Printf("[%v] Id：%s 名称：%s, 类型 ：%d\n", index, store.StoreId, store.StoreName, store.StoreType)
-		}
+	if err := session.GetStoreList(); err != nil {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoGoodsErr))...)
+		conf.OutputBytes(c)
+		time.Sleep(1 * time.Second)
+		return err
+	}
 
-	CartLoop:
-		// 商品列表获取，与地址挂钩
-		if err = session.CheckCart(); err != nil {
-			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
-			time.Sleep(1 * time.Second)
-			goto CartLoop
-		}
-	CartShowLoop:
-		fmt.Printf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05"))
-		session.GoodsList = make([]sams.Goods, 0)
-		_supplyCheck := false
-		for _, v := range session.Cart.FloorInfoList {
-			if v.FloorId == session.FloorId {
-				for index, goods := range v.NormalGoodsList {
-					if session.Setting.RunMode == 99 && goods.SpuId == session.Setting.GoodSpuId {
-						_supplyCheck = true
-					}
-					session.GoodsList = append(session.GoodsList, goods.ToGoods())
-					fmt.Printf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100)
-				}
-				session.FloorInfo = v
-				session.DeliveryInfoVO = sams.DeliveryInfoVO{
-					StoreDeliveryTemplateId: v.StoreInfo.StoreDeliveryTemplateId,
-					DeliveryModeId:          v.StoreInfo.DeliveryModeId,
-					StoreType:               v.StoreInfo.StoreType,
-				}
-				_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
-				fmt.Printf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100)
+	for index, store := range session.StoreList {
+		c = append(c, []byte(fmt.Sprintf("[%v] Id：%s 名称：%s, 类型 ：%d\n", index, store.StoreId, store.StoreName, store.StoreType))...)
+	}
+	conf.OutputBytes(c)
+	return nil
+}
+
+func stepCart(session *sams.Session) error {
+CartLoop:
+	var c []byte
+	if err := session.CheckCart(); err != nil {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoGoodsErr))...)
+		conf.OutputBytes(c)
+		time.Sleep(750 * time.Millisecond)
+		return err
+	}
+CartShowLoop:
+	c = make([]byte, 0)
+	c = append(c, []byte(fmt.Sprintf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	session.GoodsList = make([]sams.Goods, 0)
+	for _, v := range session.Cart.FloorInfoList {
+		if v.FloorId == session.FloorId {
+			for index, goods := range v.NormalGoodsList {
+				session.GoodsList = append(session.GoodsList, goods.ToGoods())
+				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
 			}
-		}
-
-		if session.Setting.RunMode == 99 && !_supplyCheck {
-			session.Setting.RunMode = 2
-			session.Setting.GoodSpuId = ""
-			goto ModeEnter
-		}
-		if len(session.GoodsList) == 0 {
-			fmt.Printf("[!] %s\n", conf.NoGoodsErr)
-			time.Sleep(1 * time.Second)
-			goto CartLoop
-		}
-
-		if session.Setting.AutoFixPurchaseLimitSet.IsEnabled && (session.Setting.AutoFixPurchaseLimitSet.FixOffline || session.Setting.AutoFixPurchaseLimitSet.FixOnline) {
-			err, isChangedOffline, isChangedOnline := session.FixCart()
-			if err != nil {
-				goto CartLoop
-			} else {
-				if isChangedOffline && !isChangedOnline {
-					fmt.Println("[>] 已自动修正当前限购数量，不影响线上购物车信息，将继续执行")
-					goto CartShowLoop
-				}
-				if isChangedOnline {
-					fmt.Println("[>] 已自动修正限购数量，将重新检查购物车")
-					goto CartLoop
-				}
+			session.FloorInfo = v
+			session.DeliveryInfoVO = sams.DeliveryInfoVO{
+				StoreDeliveryTemplateId: v.StoreInfo.StoreDeliveryTemplateId,
+				DeliveryModeId:          v.StoreInfo.DeliveryModeId,
+				StoreType:               v.StoreInfo.StoreType,
 			}
+			_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
+			c = append(c, []byte(fmt.Sprintf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100))...)
 		}
+	}
 
-	GoodsLoop:
-		// 商品检查
-		fmt.Printf("########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05"))
-		if err = session.CheckGoods(); err != nil {
-			fmt.Printf("[!] %s\n", err)
-			switch err {
-			case conf.OutOfSellErr:
-				goto CartLoop
-			default:
-				time.Sleep(500 * time.Millisecond)
-				goto GoodsLoop
-			}
+	if len(session.GoodsList) == 0 {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoGoodsErr))...)
+		if session.Setting.RunMode != 2 {
+			conf.OutputBytes(c)
 		}
-		if err = session.CheckSettleInfo(); err != nil {
-			fmt.Printf("[!] 校验商品失败：%s\n", err)
-			switch err {
-			case conf.CartGoodChangeErr:
-				goto CartLoop
-			case conf.LimitedErr:
-				time.Sleep(500 * time.Millisecond)
-				goto GoodsLoop
-			case conf.NoMatchDeliverMode:
-				goto AddressLoop
-			default:
-				goto GoodsLoop
-			}
-		}
+		time.Sleep(750 * time.Millisecond)
+		goto CartLoop
+	}
 
-	CapacityLoop:
-		// 运力获取
-		fmt.Printf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05"))
-		if err = session.CheckCapacity(); err != nil {
-			fmt.Printf("[!] %s\n", err)
-			switch err {
-			case conf.CapacityFullErr, conf.LimitedErr, conf.LimitedErr1:
-				time.Sleep(500 * time.Millisecond)
-				goto CapacityLoop
-			default:
-				goto CartLoop
-			}
-		}
-		if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
-			fmt.Printf("[>] 准备爆破提交可配送时段\n")
-		} else {
-			fmt.Printf("[>] 已自动选择第一条可用的配送时段\n")
-		}
-
-	OrderLoop:
-		// 下订单操作
-		fmt.Printf("########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05"))
-		err, order := session.CommitPay()
-		if err == nil {
-
-			fmt.Printf("[>] 抢购成功，订单号 %s，请前往app付款！", order.OrderNo)
-			err = notice.Do(setting.NoticeSet)
-			if err != nil {
-				fmt.Printf("[!] %s\n", err)
-			}
-			return
-		} else {
-			fmt.Printf("[!] %s\n", err)
-			switch err {
-			case conf.LimitedErr, conf.LimitedErr1:
-				time.Sleep(100 * time.Millisecond)
-				fmt.Println("[!] 立即重试...")
-				goto OrderLoop
-			case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
-				goto CapacityLoop
-			case conf.OutOfSellErr:
-				goto CartLoop
-			case conf.StoreHasClosedError:
-				goto StoreLoop
-			default:
-				goto CapacityLoop
-			}
-		}
-	} else if session.Setting.RunMode == 2 {
-	GetGoodsLoop:
-		fmt.Printf("########## 获取保供商品【%s】 ###########\n", time.Now().Format("15:04:05"))
-		validGoods := sams.NormalGoodsV2{}
-		err, goodsList := session.GetGuaranteedSupplyGoods()
+	if session.Setting.AutoFixPurchaseLimitSet.IsEnabled && (session.Setting.AutoFixPurchaseLimitSet.FixOffline || session.Setting.AutoFixPurchaseLimitSet.FixOnline) {
+		err, isChangedOffline, isChangedOnline := session.FixCart()
 		if err != nil {
-			fmt.Printf("[!] 保供监控错误：%s\n", err)
+			goto CartLoop
+		} else {
+			if isChangedOffline && !isChangedOnline {
+				c = append(c, []byte(fmt.Sprintln("[>] 已自动修正当前限购数量，不影响线上购物车信息，将继续执行"))...)
+				conf.OutputBytes(c)
+				goto CartShowLoop
+			}
+			if isChangedOnline {
+				c = append(c, []byte(fmt.Sprintln("[>] 已自动修正限购数量，将重新检查购物车"))...)
+				conf.OutputBytes(c)
+				goto CartLoop
+			}
+		}
+	}
+
+	return nil
+}
+
+func stepGoods(session *sams.Session) error {
+GoodsLoop:
+	var c []byte
+	c = append(c, []byte(fmt.Sprintf("########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	if err := session.CheckGoods(); err != nil {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+		conf.OutputBytes(c)
+		switch err {
+		case conf.OutOfSellErr:
+			return conf.GotoCartStep
+		default:
+			time.Sleep(500 * time.Millisecond)
+			goto GoodsLoop
+		}
+	}
+
+	if err := session.CheckSettleInfo(); err != nil {
+		c = append(c, []byte(fmt.Sprintf("[!] 校验商品失败：%s\n", err))...)
+		conf.OutputBytes(c)
+		switch err {
+		case conf.CartGoodChangeErr:
+			return conf.GotoCartStep
+		case conf.LimitedErr:
+			time.Sleep(500 * time.Millisecond)
+			goto GoodsLoop
+		case conf.NoMatchDeliverMode:
+			return conf.NoMatchDeliverMode
+		default:
+			goto GoodsLoop
+		}
+	}
+	return nil
+}
+
+func stepCapacity(session *sams.Session) error {
+	count := 0
+	tryTime := 1
+CapacityLoop:
+	var c []byte
+	if count >= 100 {
+		return conf.GotoCartStep
+	}
+
+	c = append(c, []byte(fmt.Sprintf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	err, content := session.CheckCapacity(tryTime)
+	if err != nil {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+		conf.OutputBytes(c)
+		switch err {
+		case conf.CapacityFullErr:
+			tryTime += 1
+			time.Sleep(500 * time.Millisecond)
+			goto CapacityLoop
+		case conf.LimitedErr, conf.LimitedErr1:
+			count += 1
+			time.Sleep(500 * time.Millisecond)
+			goto CapacityLoop
+		default:
+			return conf.GotoCartStep
+		}
+	} else {
+		c = append(c, content...)
+	}
+
+	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
+		c = append(c, []byte(fmt.Sprintln("[>] 准备爆破提交可配送时段"))...)
+	} else {
+		c = append(c, []byte(fmt.Sprintln("[>] 已自动选择第一条可用的配送时段"))...)
+	}
+	conf.OutputBytes(c)
+	return nil
+}
+
+func stepOrder(session *sams.Session) error {
+OrderLoop:
+	var c []byte
+	c = append(c, []byte(fmt.Sprintf("########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	err, order := session.CommitPay()
+	if err == nil {
+		c = append(c, []byte(fmt.Sprintf("[>] 抢购成功，订单号 %s，请前往app付款！", order.OrderNo))...)
+		conf.OutputBytes(c)
+		err = notice.Do(session.Setting.NoticeSet)
+		if err != nil {
+			c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+			conf.OutputBytes(c)
+		}
+		return nil
+	} else {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+		switch err {
+		case conf.LimitedErr, conf.LimitedErr1:
+			c = append(c, []byte(fmt.Sprintln("[!] 立即重试..."))...)
+			conf.OutputBytes(c)
+			time.Sleep(100 * time.Millisecond)
+			goto OrderLoop
+		case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
+			conf.OutputBytes(c)
+			return conf.GotoCapacityStep
+		case conf.OutOfSellErr:
+			conf.OutputBytes(c)
+			return conf.GotoCartStep
+		case conf.StoreHasClosedError:
+			conf.OutputBytes(c)
+			return conf.GotoStoreStep
+		default:
+			conf.OutputBytes(c)
+			return conf.GotoCapacityStep
+		}
+	}
+}
+
+func stepSupply(session *sams.Session) {
+GetGoodsLoop:
+	var trigger = 1
+	var c []byte
+	c = append(c, []byte(fmt.Sprintf("########## 获取保供商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	validGoods := sams.NormalGoodsV2{}
+	err, goodsList := session.GetGuaranteedSupplyGoods()
+	if err != nil {
+		c = append(c, []byte(fmt.Sprintf("[!] 保供监控错误：%s\n", err))...)
+		conf.OutputBytes(c)
+		time.Sleep(1 * time.Second)
+		goto GetGoodsLoop
+	} else {
+		if len(goodsList) == 0 {
+			c = append(c, []byte(fmt.Sprintln("[!] 未上架保供商品"))...)
+			conf.OutputBytes(c)
 			time.Sleep(1 * time.Second)
 			goto GetGoodsLoop
-		} else {
-			if len(goodsList) == 0 {
-				fmt.Println("[!] 未上架保供商品")
-				time.Sleep(1 * time.Second)
-				goto GetGoodsLoop
+		}
+	}
+
+	for index, v := range goodsList {
+		if session.Setting.SupplySet.IsEnabled {
+			isBlack := false
+			isWhite := false
+			for _, keyWord := range session.Setting.SupplySet.KeyWords {
+				if len(keyWord) > 0 && session.Setting.SupplySet.Mode == 2 && strings.Contains(v.Title, keyWord) {
+					isBlack = true
+					break
+				} else if len(keyWord) > 0 && session.Setting.SupplySet.Mode == 1 && strings.Contains(v.Title, keyWord) {
+					isWhite = true
+					break
+				}
+			}
+			if (session.Setting.SupplySet.Mode == 2 && isBlack) || (session.Setting.SupplySet.Mode == 1 && !isWhite) {
+				c = append(c, []byte(fmt.Sprintf("[已忽略此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle))...)
+				continue
 			}
 		}
 
-		for index, v := range goodsList {
-			if session.Setting.SupplySet.IsEnabled {
-				isBlack := false
-				isWhite := false
-				for _, keyWord := range session.Setting.SupplySet.KeyWords {
-					if len(keyWord) > 0 && session.Setting.SupplySet.Mode == 2 && strings.Contains(v.Title, keyWord) {
-						isBlack = true
-						break
-					} else if len(keyWord) > 0 && session.Setting.SupplySet.Mode == 1 && strings.Contains(v.Title, keyWord) {
-						isWhite = true
-						break
-					}
-				}
-				if (session.Setting.SupplySet.Mode == 2 && isBlack) || (session.Setting.SupplySet.Mode == 1 && !isWhite) {
-					fmt.Printf("[已忽略此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
-					continue
-				}
-			}
-
-			fmt.Printf("[%v] %s 数量：%v 单价：%d.%d 详情：%s\n", index, v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle)
-			if v.StockQuantity > 0 {
-				validGoods = v
-				break
-			}
-		}
-
-		if validGoods.Title == "" {
-			time.Sleep(1 * time.Second)
-			goto GetGoodsLoop
-		} else {
-			fmt.Printf("[>] 发现可购保供商品: %s, 即将自动添加并下单\n", validGoods.Title)
+		c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d 详情：%s\n", index, v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle))...)
+		if v.StockQuantity > 0 {
+			validGoods = v
+			c = append(c, []byte(fmt.Sprintf("[>] 发现可购保供商品: %s, 即将自动添加并下单\n", validGoods.Title))...)
 			// 自动添加购物车
 			_goodList := []sams.AddCartGoods{validGoods.ToAddCartGoods()}
 			if err = session.AddCartGoodsInfo(_goodList); err != nil {
-				fmt.Printf("[!] %s\n", err)
+				c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+			} else {
+				trigger += 1
 			}
-			session.Setting.GoodSpuId = validGoods.SpuId
-			session.Setting.RunMode = 99
-			goto ModeEnter
 		}
-
-	} else {
-		fmt.Printf("[!] %s\n", conf.RunModeErr)
 	}
+	conf.OutputBytes(c)
+	time.Sleep(time.Duration(trigger) * time.Second)
+	goto GetGoodsLoop
 }
