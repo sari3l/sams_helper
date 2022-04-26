@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func InputSelect(_len int) int {
@@ -19,6 +21,35 @@ func InputSelect(_len int) int {
 		} else {
 			break
 		}
+	}
+	return index
+}
+
+func InputString(_len int) []int {
+	fmt.Println("\n[>] 请输入选择并用英文逗号隔开(,)，不选择直接回车即可：")
+	var index []int
+	var input string
+	stdin := bufio.NewReader(os.Stdin)
+	_, err := fmt.Fscanln(stdin, &input)
+	if err != nil {
+		//fmt.Printf("[!] 输入有误：%s!，将继续执行\n", err)
+		return nil
+	}
+	inputs := strings.Split(input, ",")
+	for _, v := range inputs {
+		if len(v) == 0 {
+			continue
+		}
+		value, err := strconv.Atoi(v)
+		if err != nil {
+			fmt.Printf("[!] 解析 %s 错误！\n", v)
+			continue
+		}
+		if value >= _len {
+			fmt.Printf("[!] 解析 %d 有误：超过最大序号！\n", value)
+			continue
+		}
+		index = append(index, value)
 	}
 	return index
 }

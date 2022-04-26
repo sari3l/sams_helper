@@ -17,6 +17,7 @@ type Session struct {
 	Cart               Cart               `json:"cart"`
 	FloorInfo          FloorInfo          `json:"floorInfo"`
 	GoodsList          []Goods            `json:"goodsList"`
+	CouponList         []Coupon           `json:"couponList"`
 	SettleDeliveryInfo SettleDeliveryInfo `json:"settleDeliveryInfo"`
 	DeliveryInfoVO     DeliveryInfoVO     `json:"deliveryInfoVO"`
 	Capacity           Capacity           `json:"capacity"`

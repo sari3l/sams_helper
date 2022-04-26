@@ -21,6 +21,17 @@ type StoreListParam struct {
 	Latitude  string `json:"latitude"`
 }
 
+// 优惠券
+
+var CouponListAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/coupon/coupon/query"
+
+type CouponListParam struct {
+	Status   string `json:"status"`
+	Uid      string `json:"uid"`
+	PageSize int64  `json:"pageSize"`
+	PageNum  int64  `json:"pageNum"`
+}
+
 // 购物车
 
 var CartAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/getUserCart"
@@ -117,7 +128,7 @@ type CommitPayParam struct {
 	StoreInfo          StoreInfo          `json:"storeInfo"`
 	ShortageDesc       string             `json:"shortageDesc"`
 	PayMethodId        string             `json:"payMethodId"`
-	CouponList         []string           `json:"couponList"`
+	CouponList         []CouponInfo       `json:"couponList"`
 }
 
 type IOSCommitPayParam struct {

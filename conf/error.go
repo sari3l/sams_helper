@@ -8,6 +8,8 @@ var NoValidAddressErr = errors.New("没有有效的收货地址，请前往 APP 
 var NoGoodsErr = errors.New("当前购物车中无有效商品")
 var FixCartErr = errors.New("修正购物车列表限购商品数量失败")
 var RunModeErr = errors.New("运行模式错误，请检查配置")
+var NoValidCouponErr = errors.New("没有查询到有效的优惠券，跳过此步骤")
+var NoChooseCouponErr = errors.New("输入异常或未选取优惠券，将继续执行")
 
 var AuthFailErr = errors.New("鉴权失败 auth-token 过期")
 var CartGoodChangeErr = errors.New("购物车商品发生变化，请返回购物车页面重新结算")
@@ -23,5 +25,6 @@ var DecreaseCapacityCountError = errors.New("扣减运力失败")
 var StoreHasClosedError = errors.New("门店已打烊")
 var DeliveryTypeErr = errors.New("未知设备类型")
 var NotCheckShopPendingErr = errors.New("请阅读并勾选《购物须知》")
+var RequestErr = errors.New("请求异常")
 
 // 429 429 {"message":"Requests rate limited. stage:service"}

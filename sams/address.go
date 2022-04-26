@@ -87,5 +87,6 @@ func (session *Session) ChooseAddress() error {
 	if err = session.SetAddress(addressList[index]); err != nil {
 		return err
 	}
+	fmt.Printf("[>] 已选地址：%s %s %s %s %s\n", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
 	return nil
 }

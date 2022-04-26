@@ -106,7 +106,8 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 		case "NotCheckShopPendingErr":
 			return conf.NotCheckShopPendingErr, gjson.Result{}
 		case "REQUEST_ERROR":
-			return errors.New(fmt.Sprintf("请求错误 %s", result.Get("msg").Str)), gjson.Result{}
+			fmt.Printf("[!] 请求错误 %s\n", result.Get("msg").Str)
+			return conf.RequestErr, gjson.Result{}
 		default:
 			return errors.New(fmt.Sprintf("code: %s %s", result.Get("code"), result.Get("msg").Str)), gjson.Result{}
 		}

@@ -50,9 +50,12 @@ AddressLoop:
 		} else {
 			goto AddressLoop
 		}
-	} else {
-		fmt.Println("[>] 切换成功!")
-		fmt.Printf("[>] %s %s %s %s %s\n", session.Address.Name, session.Address.DistrictName, session.Address.ReceiverAddress, session.Address.DetailAddress, session.Address.Mobile)
+	}
+
+	//CouponLoop:
+	fmt.Println("########## 选择使用优惠券 ##########")
+	if err = session.ChooseCoupons(); err != nil {
+		fmt.Printf("[!] %s\n", err)
 	}
 
 ModeEnter:
@@ -103,6 +106,7 @@ ModeEnter:
 
 		if session.Setting.RunMode == 99 && !_supplyCheck {
 			session.Setting.RunMode = 2
+			session.Setting.GoodSpuId = ""
 			goto ModeEnter
 		}
 		if len(session.GoodsList) == 0 {
@@ -180,7 +184,7 @@ ModeEnter:
 		err, order := session.CommitPay()
 		if err == nil {
 
-			fmt.Printf("抢购成功，订单号 %s，请前往app付款！", order.OrderNo)
+			fmt.Printf("[>] 抢购成功，订单号 %s，请前往app付款！", order.OrderNo)
 			err = notice.Do(setting.NoticeSet)
 			if err != nil {
 				fmt.Printf("[!] %s\n", err)

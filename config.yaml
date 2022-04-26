@@ -5,15 +5,16 @@ authToken: "<authToken>"
 runMode: 1
 # 保供抢购关键字黑白名单筛选
 supplySet:
-  # 1->白名单 | 2->黑名单
-  mode: 1
   # 是否开启
   isEnabled: false
+  # 筛选方式
+  # 1->白名单 | 2->黑名单
+  mode: 1
   # 检测有以下关键字的内容，例：["蔬菜", "保供套餐C"]
-  keyWords: ["A"]
+  keyWords: ["<关键字>"]
 # 运力暴力模式
 bruteCapacity: true
-# 设备类型 Header
+# 设备类型模拟
 # 1->IOS | 2->小程序
 deviceType: 1
 # 配送方式

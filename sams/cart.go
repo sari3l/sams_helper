@@ -175,7 +175,7 @@ func (session *Session) CheckCart() error {
 	data := CartParam{
 		StoreList:         session.StoreList,
 		AddressId:         session.Address.AddressId,
-		Uid:               "",
+		Uid:               session.Uid,
 		DeliveryType:      fmt.Sprintf("%d", session.Setting.DeliveryType),
 		HomePagelatitude:  session.Address.Latitude,
 		HomePagelongitude: session.Address.Longitude,

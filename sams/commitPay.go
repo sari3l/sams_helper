@@ -20,6 +20,11 @@ type PayInfo struct {
 	TotalAmt   int64  `json:"TotalAmt"`
 }
 
+type CouponInfo struct {
+	PromotionId string `json:"promotionId"`
+	StoreId     string `json:"storeId"`
+}
+
 type SettleDeliveryInfo struct {
 	DeliveryType         int64  `json:"deliveryType"`
 	DeliveryDesc         string `json:"deliveryDesc"`
@@ -63,7 +68,12 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 		SettleDeliveryInfo: session.SettleDeliveryInfo,
 		Uid:                session.Uid,
 		AppId:              "wx111",
-		CouponList:         make([]string, 0),
+		CouponList:         make([]CouponInfo, 0),
+	}
+	if len(session.CouponList) > 0 {
+		for _, v := range session.CouponList {
+			_data.CouponList = append(_data.CouponList, CouponInfo{PromotionId: v.Code, StoreId: session.FloorInfo.StoreInfo.StoreId})
+		}
 	}
 
 	var dataStr []byte

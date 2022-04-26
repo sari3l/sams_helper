@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
-	"strconv"
 	"time"
 )
 
@@ -72,12 +71,6 @@ func (session *Session) GetCapacity(result gjson.Result) error {
 	return nil
 }
 
-func unixToTime(timestamp string) string {
-	_time, _ := strconv.ParseInt(timestamp, 0, 64)
-	tm := time.Unix(_time/1000, _time%1000)
-	return fmt.Sprintf("%s", tm.Format("2006-01-02 03:04:05 PM"))
-}
-
 func (session *Session) SetCapacity() error {
 	session.SettleDeliveryInfo = SettleDeliveryInfo{}
 	isSet := false
@@ -93,7 +86,7 @@ func (session *Session) SetCapacity() error {
 		}
 		if len(_end) >= 3 {
 			session.SettleDeliveryInfo.ExpectArrivalEndTime = _end[len(_end)-2]
-			fmt.Printf("爆破配送时间范围：%s - %s\n", unixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), unixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime))
+			fmt.Printf("爆破配送时间范围：%s - %s\n", conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime))
 			isSet = true
 		}
 	}
