@@ -47,6 +47,16 @@ proxySet:
   # 代理 URL
   proxyUrl: "http://127.0.0.1:8080"
 
+# 各步骤休眠时间（毫秒）
+sleepTimeSet:
+  stepStoreSleep: 1000
+  stepCartSleep: 1000
+  stepCartShowSleep: 1000
+  stepGoodsSleep: 1000
+  stepCapacitySleep: 1000
+  stepOrderSleep: 100
+  stepSupplySleep: 750
+
 # 通知设置
 noticeSet:
   # 通知类型

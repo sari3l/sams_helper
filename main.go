@@ -74,25 +74,52 @@ func doInitStep() (error, sams.Session) {
 func doBuyStep(session *sams.Session) error {
 stepStoreLoop:
 	if err := stepStore(session); err != nil {
-		return err
+		goto stepStoreLoop
 	}
 stepCartLoop:
 	if err := stepCart(session); err != nil {
-		return err
+		goto stepCartLoop
 	}
+stepCartShowLoop:
+	if err := stepCartShow(session); err != nil {
+		if err == conf.GotoStoreStep {
+			goto stepStoreLoop
+		} else if err == conf.GotoCartStep {
+			goto stepCartLoop
+		} else {
+			goto stepCartShowLoop
+		}
+	}
+stepGoodsLoop:
 	if err := stepGoods(session); err != nil {
 		if err == conf.GotoStoreStep {
 			goto stepStoreLoop
-		} else {
+		} else if err == conf.GotoCartStep {
+			goto stepCartLoop
+		} else if err == conf.NoMatchDeliverMode {
 			return err
+		} else {
+			goto stepGoodsLoop
 		}
 	}
+	capacityLoopCount := 0
+	bruteTime := 1
 stepCapacityLoop:
-	if err := stepCapacity(session); err != nil {
+	if err := stepCapacity(session, bruteTime); err != nil {
 		if err == conf.GotoCartStep {
 			goto stepCartLoop
+		} else if err == conf.CapacityFullErr {
+			capacityLoopCount += 1
+			if capacityLoopCount >= 100 {
+				goto stepCartLoop
+			} else {
+				goto stepCapacityLoop
+			}
+		} else {
+			goto stepCapacityLoop
 		}
 	}
+stepOrderLoop:
 	if err := stepOrder(session); err != nil {
 		if err == conf.GotoStoreStep {
 			goto stepStoreLoop
@@ -100,6 +127,11 @@ stepCapacityLoop:
 			goto stepCartLoop
 		} else if err == conf.GotoCapacityStep {
 			goto stepCapacityLoop
+		} else if err == conf.DecreaseCapacityCountError {
+			bruteTime += 1
+			goto stepCapacityLoop
+		} else {
+			goto stepOrderLoop
 		}
 	}
 
@@ -134,7 +166,7 @@ func stepStore(session *sams.Session) error {
 	if err := session.GetStoreList(); err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoGoodsErr))...)
 		conf.OutputBytes(c)
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepStoreSleep) * time.Millisecond)
 		return err
 	}
 
@@ -146,16 +178,17 @@ func stepStore(session *sams.Session) error {
 }
 
 func stepCart(session *sams.Session) error {
-CartLoop:
 	var c []byte
 	if err := session.CheckCart(); err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoGoodsErr))...)
 		conf.OutputBytes(c)
-		time.Sleep(750 * time.Millisecond)
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartSleep) * time.Millisecond)
 		return err
 	}
-CartShowLoop:
-	c = make([]byte, 0)
+	return nil
+}
+func stepCartShow(session *sams.Session) error {
+	var c []byte
 	c = append(c, []byte(fmt.Sprintf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	session.GoodsList = make([]sams.Goods, 0)
 	for _, v := range session.Cart.FloorInfoList {
@@ -180,24 +213,24 @@ CartShowLoop:
 		if session.Setting.RunMode != 2 {
 			conf.OutputBytes(c)
 		}
-		time.Sleep(750 * time.Millisecond)
-		goto CartLoop
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartShowSleep) * time.Millisecond)
+		return conf.GotoCartStep
 	}
 
 	if session.Setting.AutoFixPurchaseLimitSet.IsEnabled && (session.Setting.AutoFixPurchaseLimitSet.FixOffline || session.Setting.AutoFixPurchaseLimitSet.FixOnline) {
 		err, isChangedOffline, isChangedOnline := session.FixCart()
 		if err != nil {
-			goto CartLoop
+			return conf.GotoCartStep
 		} else {
 			if isChangedOffline && !isChangedOnline {
 				c = append(c, []byte(fmt.Sprintln("[>] 已自动修正当前限购数量，不影响线上购物车信息，将继续执行"))...)
 				conf.OutputBytes(c)
-				goto CartShowLoop
+				return conf.GotoCartShowStep
 			}
 			if isChangedOnline {
 				c = append(c, []byte(fmt.Sprintln("[>] 已自动修正限购数量，将重新检查购物车"))...)
 				conf.OutputBytes(c)
-				goto CartLoop
+				return conf.GotoCartStep
 			}
 		}
 	}
@@ -206,7 +239,6 @@ CartShowLoop:
 }
 
 func stepGoods(session *sams.Session) error {
-GoodsLoop:
 	var c []byte
 	c = append(c, []byte(fmt.Sprintf("########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	if err := session.CheckGoods(); err != nil {
@@ -216,8 +248,8 @@ GoodsLoop:
 		case conf.OutOfSellErr:
 			return conf.GotoCartStep
 		default:
-			time.Sleep(500 * time.Millisecond)
-			goto GoodsLoop
+			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepGoodsSleep) * time.Millisecond)
+			return conf.GotoGoodsStep
 		}
 	}
 
@@ -228,40 +260,31 @@ GoodsLoop:
 		case conf.CartGoodChangeErr:
 			return conf.GotoCartStep
 		case conf.LimitedErr:
-			time.Sleep(500 * time.Millisecond)
-			goto GoodsLoop
+			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepGoodsSleep) * time.Millisecond)
+			return conf.GotoGoodsStep
 		case conf.NoMatchDeliverMode:
 			return conf.NoMatchDeliverMode
 		default:
-			goto GoodsLoop
+			return conf.GotoGoodsStep
 		}
 	}
 	return nil
 }
 
-func stepCapacity(session *sams.Session) error {
-	count := 0
-	tryTime := 1
-CapacityLoop:
+func stepCapacity(session *sams.Session, bruteTime int) error {
 	var c []byte
-	if count >= 100 {
-		return conf.GotoCartStep
-	}
-
 	c = append(c, []byte(fmt.Sprintf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05")))...)
-	err, content := session.CheckCapacity(tryTime)
+	err, content := session.CheckCapacity(bruteTime)
 	if err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 		conf.OutputBytes(c)
 		switch err {
 		case conf.CapacityFullErr:
-			tryTime += 1
-			time.Sleep(500 * time.Millisecond)
-			goto CapacityLoop
+			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCapacitySleep) * time.Millisecond)
+			return err
 		case conf.LimitedErr, conf.LimitedErr1:
-			count += 1
-			time.Sleep(500 * time.Millisecond)
-			goto CapacityLoop
+			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCapacitySleep) * time.Millisecond)
+			return conf.GotoCapacityStep
 		default:
 			return conf.GotoCartStep
 		}
@@ -279,7 +302,6 @@ CapacityLoop:
 }
 
 func stepOrder(session *sams.Session) error {
-OrderLoop:
 	var c []byte
 	c = append(c, []byte(fmt.Sprintf("########## 提交订单中【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	err, order := session.CommitPay()
@@ -298,11 +320,14 @@ OrderLoop:
 		case conf.LimitedErr, conf.LimitedErr1:
 			c = append(c, []byte(fmt.Sprintln("[!] 立即重试..."))...)
 			conf.OutputBytes(c)
-			time.Sleep(100 * time.Millisecond)
-			goto OrderLoop
-		case conf.CloseOrderTimeExceptionErr, conf.DecreaseCapacityCountError, conf.NotDeliverCapCityErr:
+			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepOrderSleep) * time.Millisecond)
+			return conf.GotoOrderStep
+		case conf.CloseOrderTimeExceptionErr, conf.NotDeliverCapCityErr:
 			conf.OutputBytes(c)
 			return conf.GotoCapacityStep
+		case conf.DecreaseCapacityCountError:
+			conf.OutputBytes(c)
+			return conf.DecreaseCapacityCountError
 		case conf.OutOfSellErr:
 			conf.OutputBytes(c)
 			return conf.GotoCartStep
@@ -326,13 +351,13 @@ GetGoodsLoop:
 	if err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] 保供监控错误：%s\n", err))...)
 		conf.OutputBytes(c)
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepSupplySleep) * time.Millisecond)
 		goto GetGoodsLoop
 	} else {
 		if len(goodsList) == 0 {
 			c = append(c, []byte(fmt.Sprintln("[!] 未上架保供商品"))...)
 			conf.OutputBytes(c)
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepSupplySleep) * time.Millisecond)
 			goto GetGoodsLoop
 		}
 	}
@@ -370,6 +395,6 @@ GetGoodsLoop:
 		}
 	}
 	conf.OutputBytes(c)
-	time.Sleep(time.Duration(trigger) * time.Second)
+	time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepSupplySleep*trigger) * time.Millisecond)
 	goto GetGoodsLoop
 }

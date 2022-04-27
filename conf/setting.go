@@ -23,11 +23,22 @@ type SupplySet struct {
 	KeyWords  []string `yaml:"keyWords"`
 }
 
+type SleepTimeSet struct {
+	StepStoreSleep    int `yaml:"stepStoreSleep"`
+	StepCartSleep     int `yaml:"stepCartSleep"`
+	StepCartShowSleep int `yaml:"stepCartShowSleep"`
+	StepGoodsSleep    int `yaml:"stepGoodsSleep"`
+	StepCapacitySleep int `yaml:"stepCapacitySleep"`
+	StepOrderSleep    int `yaml:"stepOrderSleep"`
+	StepSupplySleep   int `yaml:"stepSupplySleep"`
+}
+
 type Setting struct {
 	AuthToken               string                  `yaml:"authToken"`
 	RunMode                 int                     `yaml:"runMode"`
 	SupplySet               SupplySet               `yaml:"supplySet"`
 	BruteCapacity           bool                    `yaml:"bruteCapacity"`
+	SleepTimeSet            SleepTimeSet            `yaml:"sleepTimeSet"`
 	DeviceType              int64                   `yaml:"deviceType"`
 	DeliveryType            int64                   `yaml:"deliveryType"`
 	StoreType               int64                   `yaml:"storeType"`

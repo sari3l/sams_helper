@@ -2,9 +2,12 @@ package conf
 
 import "errors"
 
-var GotoCartStep = errors.New("跳转购物车")
-var GotoStoreStep = errors.New("跳转商店")
-var GotoCapacityStep = errors.New("跳转运力")
+var GotoStoreStep = errors.New("跳转商店展示")
+var GotoCartStep = errors.New("跳转购物车获取")
+var GotoCartShowStep = errors.New("跳转购物车展示")
+var GotoGoodsStep = errors.New("跳转商品校验")
+var GotoCapacityStep = errors.New("跳转运力检查")
+var GotoOrderStep = errors.New("跳转下订购单")
 
 var RunModeErr = errors.New("运行模式错误，请检查配置")
 var AuthTokenErr = errors.New("auth-token 可能未设置，请检查")
