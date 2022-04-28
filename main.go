@@ -313,7 +313,11 @@ func stepOrder(session *sams.Session) error {
 			c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 			conf.OutputBytes(c)
 		}
-		return nil
+		if session.Setting.RunUnlimited {
+			return conf.GotoCartStep
+		} else {
+			return nil
+		}
 	} else {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 		switch err {
@@ -342,6 +346,7 @@ func stepOrder(session *sams.Session) error {
 }
 
 func stepSupply(session *sams.Session) {
+	orderAlready := make(map[string]bool)
 GetGoodsLoop:
 	var trigger = 1
 	var c []byte
@@ -363,6 +368,10 @@ GetGoodsLoop:
 	}
 
 	for index, v := range goodsList {
+		if orderAlready[v.SpuId] {
+			c = append(c, []byte(fmt.Sprintf("[已添加此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle))...)
+			continue
+		}
 		if session.Setting.SupplySet.IsEnabled {
 			isBlack := false
 			isWhite := false
@@ -391,6 +400,7 @@ GetGoodsLoop:
 				c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 			} else {
 				trigger += 1
+				orderAlready[v.SpuId] = true
 			}
 		}
 	}

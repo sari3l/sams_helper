@@ -14,6 +14,8 @@ supplySet:
   keyWords: ["<关键字>"]
 # 运力暴力模式
 bruteCapacity: true
+# 永不停歇（下单成功不退出）
+runUnlimited: false
 # 设备类型模拟
 # 1->IOS | 2->小程序
 deviceType: 1
