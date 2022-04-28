@@ -80,6 +80,9 @@ noticeSet:
     ftqqServer: "https://sctapi.ftqq.com"
     # 用户 Token，获取方式：https://sct.ftqq.com/sendkey
     ftqqSendKey: "<ftqqSendKey>"
+    # 消息通道：最多支持两通道如："9|66"，具体通道请看 https://sct.ftqq.com/sendkey
+    # 默认：方糖服务号
+    ftqqChannel: "9"
     # 信息标题
     ftqqTitle: "【山姆助手】提醒"
     # 信息内容

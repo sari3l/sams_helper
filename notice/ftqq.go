@@ -13,6 +13,7 @@ import (
 type FTQQSet struct {
 	Server  string `yaml:"ftqqServer"`
 	SendKey string `yaml:"ftqqSendKey"`
+	Channel string `yaml:"ftqqChannel"`
 	Title   string `yaml:"ftqqTitle"`
 	Desp    string `yaml:"ftqqDesp"`
 }
@@ -21,8 +22,9 @@ type FTQQSet struct {
 func FTQQPush(ftqqSet FTQQSet) error {
 	urlPath := fmt.Sprintf("%s/%s.send", ftqqSet.Server, ftqqSet.SendKey)
 	data := url.Values{
-		"text": []string{ftqqSet.Title},
-		"desp": []string{ftqqSet.Desp},
+		"channel": []string{ftqqSet.Channel},
+		"text":    []string{ftqqSet.Title},
+		"desp":    []string{ftqqSet.Desp},
 	}
 	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Post(
