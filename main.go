@@ -220,6 +220,7 @@ func stepCartShow(session *sams.Session) error {
 	if session.Setting.AutoFixPurchaseLimitSet.IsEnabled && (session.Setting.AutoFixPurchaseLimitSet.FixOffline || session.Setting.AutoFixPurchaseLimitSet.FixOnline) {
 		err, isChangedOffline, isChangedOnline := session.FixCart()
 		if err != nil {
+			conf.OutputBytes(c)
 			return conf.GotoCartStep
 		} else {
 			if isChangedOffline && !isChangedOnline {
@@ -234,7 +235,7 @@ func stepCartShow(session *sams.Session) error {
 			}
 		}
 	}
-
+	conf.OutputBytes(c)
 	return nil
 }
 
