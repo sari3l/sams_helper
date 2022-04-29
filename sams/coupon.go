@@ -73,8 +73,13 @@ func (session *Session) ChooseCoupons() error {
 	for i, addr := range couponList {
 		fmt.Printf("[%2v] 名称：%-15s 有效期：%s - %s 简介：%-30q\n", i, addr.Name, conf.UnixToTime(addr.ExpireStart), conf.UnixToTime(addr.ExpireEnd), addr.Remark)
 	}
-
-	indexes := conf.InputString(len(couponList))
+	var indexes []int
+	if session.Setting.AutoInputSet.IsEnabled {
+		fmt.Printf("[>] 自动输入：%v\n", session.Setting.AutoInputSet.InputCouponList)
+		indexes = session.Setting.AutoInputSet.InputCouponList
+	} else {
+		indexes = conf.InputIntList(len(couponList))
+	}
 	if len(indexes) == 0 {
 		fmt.Printf("[>] %s\n", conf.NoChooseCouponErr)
 	} else {

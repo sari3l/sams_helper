@@ -16,7 +16,7 @@ func InputSelect(_len int) int {
 		_, err := fmt.Fscanln(stdin, &index)
 		if err != nil {
 			fmt.Printf("[!] 输入有误：%s!\n", err)
-		} else if index >= _len {
+		} else if index > _len {
 			fmt.Println("\n[!] 输入有误：超过最大序号！")
 		} else {
 			break
@@ -25,7 +25,7 @@ func InputSelect(_len int) int {
 	return index
 }
 
-func InputString(_len int) []int {
+func InputIntList(_len int) []int {
 	fmt.Println("\n[>] 请输入选择并用英文逗号隔开(,)，不选择直接回车即可：")
 	var index []int
 	var input string

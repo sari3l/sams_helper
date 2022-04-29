@@ -1,27 +1,19 @@
+###############################
+# 基础设置
+###############################
 # 山姆会员 Token
 authToken: "<authToken>"
 # 运行模式
 # 1->山姆抢购 | 2->保供抢购
 runMode: 1
-# 保供抢购关键字黑白名单筛选
-supplySet:
-  # 是否开启
-  isEnabled: false
-  # 筛选方式
-  # 1->白名单 | 2->黑名单
-  mode: 1
-  # 检测有以下关键字的内容，例：["蔬菜", "保供套餐C"]
-  keyWords: ["<关键字>"]
 # 运力暴力模式
 bruteCapacity: true
-# 永不停歇（下单成功不退出）
-runUnlimited: false
-# 设备类型模拟
-# 1->IOS | 2->小程序
-deviceType: 1
 # 配送方式
 # 1->极速达 | 2->全城配
 deliveryType: 2
+# 设备类型模拟
+# 1->IOS | 2->小程序
+deviceType: 1
 # 商店类型
 # 2->生鲜直达 | 4->极速达 | 8->全球购保税
 storeType: 2
@@ -30,35 +22,14 @@ storeType: 2
 floorId: 1
 # 是否忽略无效商品
 ignoreInvalid: true
-# 自动修正限购商品数量
-autoFixPurchaseLimit:
-  # 是否开启
-  isEnabled: true
-  # 是否开启线下修正，只影响最后提交订单内容
-  fixOffline: true
-  # 是否开启线上修正，会影响线上购物车商品的数量
-  fixOnline: false
 # 运力搜索时间跨度（日）
 perDateLen : 7
 # SaasId 无需改动
 saasId: "1818"
-# 代理设置
-proxySet:
-  # 是否开启代理
-  isEnabled: false
-  # 代理 URL
-  proxyUrl: "http://127.0.0.1:8080"
 
-# 各步骤休眠时间（毫秒）
-sleepTimeSet:
-  stepStoreSleep: 1000
-  stepCartSleep: 1000
-  stepCartShowSleep: 1000
-  stepGoodsSleep: 1000
-  stepCapacitySleep: 1000
-  stepOrderSleep: 100
-  stepSupplySleep: 750
-
+###############################
+# 通知功能
+###############################
 # 通知设置
 noticeSet:
   # 通知类型
@@ -98,3 +69,64 @@ noticeSet:
     soundTimes: 2
     # 播报声音
     soundVoice: "Ting-ting"
+
+###############################
+# 高级功能
+###############################
+# 永不停歇（下单成功不退出）
+runUnlimited: false
+
+# 保供抢购关键字黑白名单筛选
+supplySet:
+  # 是否开启
+  isEnabled: false
+  # 筛选方式
+  # 1->白名单 | 2->黑名单
+  mode: 1
+  # 检测有以下关键字的内容，例：["蔬菜", "保供套餐C"]
+  keyWords: ["<关键字>"]
+
+# 代理设置
+proxySet:
+  # 是否开启代理
+  isEnabled: false
+  # 代理 URL
+  proxyUrl: "http://127.0.0.1:8080"
+
+# 自动修正限购商品数量
+autoFixPurchaseLimit:
+  # 是否开启
+  isEnabled: true
+  # 是否开启线下修正，只影响最后提交订单内容
+  fixOffline: true
+  # 是否开启线上修正，会影响线上购物车商品的数量
+  fixOnline: false
+
+# 自动输入设置
+autoInputSet:
+  # 是否开启
+  isEnabled: false
+  # 支付方式序号
+  # 0->微信 | 1->支付宝 | 2->银联 | 3->沃尔玛礼品卡
+  inputPayMethod: 0
+  # 地址序号
+  inputAddress: 0
+  # 优惠券序号列表，例：[0,1,2]
+  inputCouponList: []
+
+# 各步骤休眠时间（毫秒）
+sleepTimeSet:
+  # 请求商店信息
+  stepStoreSleep: 1000
+  # 请求购物车信息
+  stepCartSleep: 1000
+  # 购物车信息展示
+  stepCartShowSleep: 1000
+  # 检查商品有效性
+  stepGoodsSleep: 1000
+  # 请求运力信息
+  stepCapacitySleep: 1000
+  # 下单间隔
+  stepOrderSleep: 100
+  # 请求保供商品信息
+  stepSupplySleep: 1000

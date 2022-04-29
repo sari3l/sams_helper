@@ -33,6 +33,13 @@ type SleepTimeSet struct {
 	StepSupplySleep   int `yaml:"stepSupplySleep"`
 }
 
+type AutoInputSet struct {
+	IsEnabled       bool  `yaml:"isEnabled"`
+	InputPayMethod  int   `yaml:"inputPayMethod"`
+	InputAddress    int   `yaml:"inputAddress"`
+	InputCouponList []int `yaml:"inputCouponList"`
+}
+
 type Setting struct {
 	AuthToken               string                  `yaml:"authToken"`
 	RunMode                 int                     `yaml:"runMode"`
@@ -50,6 +57,7 @@ type Setting struct {
 	ProxySet                ProxySet                `yaml:"proxySet"`
 	NoticeSet               notice.NoticerSet       `yaml:"noticeSet"`
 	RunUnlimited            bool                    `yaml:"runUnlimited"`
+	AutoInputSet            AutoInputSet            `yaml:"autoInputSet"`
 }
 
 func InitSetting() (error, Setting) {

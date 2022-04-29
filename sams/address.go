@@ -83,7 +83,16 @@ func (session *Session) ChooseAddress() error {
 	for i, addr := range addressList {
 		fmt.Printf("[%v] %s %s %s %s %s\n", i, addr.Name, addr.DistrictName, addr.ReceiverAddress, addr.DetailAddress, addr.Mobile)
 	}
-	index := conf.InputSelect(len(addressList))
+	var index = 0
+	if session.Setting.AutoInputSet.IsEnabled && session.Setting.AutoInputSet.InputAddress < len(addressList) && session.Setting.AutoInputSet.InputAddress >= 0 {
+		fmt.Printf("[>] 自动输入：%d\n", session.Setting.AutoInputSet.InputAddress)
+		index = session.Setting.AutoInputSet.InputAddress
+	} else {
+		if session.Setting.AutoInputSet.IsEnabled {
+			fmt.Println("[!] 自动输入开启，但解析 InputAddress 错误，请手动输入或检查配置")
+		}
+		index = conf.InputSelect(len(addressList))
+	}
 	if err = session.SetAddress(addressList[index]); err != nil {
 		return err
 	}

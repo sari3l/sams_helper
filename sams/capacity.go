@@ -73,15 +73,18 @@ func (session *Session) GetCapacity(result gjson.Result) error {
 
 func (session *Session) SetCapacity(tryTime int) (error, []byte) {
 	var c []byte
+	var isSet = false
+	var useBrute = false
 	session.SettleDeliveryInfo = SettleDeliveryInfo{}
-	isSet := false
-	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {
+	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 && len(session.Capacity.CapCityResponseList) > 1 {
+		useBrute = true
 		var _end []string
 		session.SettleDeliveryInfo.DeliveryType = session.Setting.DeliveryType
 		session.SettleDeliveryInfo.DeliveryName = session.Capacity.CapCityResponseList[0].StrDate
 		session.SettleDeliveryInfo.ExpectArrivalTime = session.Capacity.CapCityResponseList[0].List[0].StartRealTime
 		for _, caps := range session.Capacity.CapCityResponseList {
 			for _, v := range caps.List {
+				c = append(c, []byte(fmt.Sprintf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled))...)
 				_end = append(_end, v.EndRealTime)
 			}
 		}
@@ -95,12 +98,13 @@ func (session *Session) SetCapacity(tryTime int) (error, []byte) {
 	if !isSet {
 		for _, caps := range session.Capacity.CapCityResponseList {
 			for _, v := range caps.List {
-				c = append(c, []byte(fmt.Sprintf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled))...)
+				if !useBrute {
+					c = append(c, []byte(fmt.Sprintf("配送时间： %s %s - %s, 是否可用：%v\n", caps.StrDate, v.StartTime, v.EndTime, !v.TimeISFull && !v.Disabled))...)
+				}
 				if v.TimeISFull == false && v.Disabled == false && !isSet {
 					session.SettleDeliveryInfo.ExpectArrivalTime = v.StartRealTime
 					session.SettleDeliveryInfo.ExpectArrivalEndTime = v.EndRealTime
 					isSet = true
-					break
 				}
 			}
 			if isSet {
