@@ -113,7 +113,7 @@ func (session *Session) SetCapacity(tryTime int) (error, []byte) {
 	if isSet {
 		return nil, c
 	}
-	return conf.CapacityFullErr, nil
+	return conf.CapacityFullErr, c
 }
 
 func (session *Session) CheckCapacity(tryTime int) (error, []byte) {
@@ -151,7 +151,7 @@ func (session *Session) CheckCapacity(tryTime int) (error, []byte) {
 
 	err, content := session.SetCapacity(tryTime)
 	if err != nil {
-		return err, nil
+		return err, content
 	}
 	return nil, content
 }

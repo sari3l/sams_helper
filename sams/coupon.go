@@ -11,6 +11,7 @@ type Coupon struct {
 	Code        string `json:"code"`
 	Remark      string `json:"remark"`
 	Name        string `json:"name"`
+	RuleId      string `json:"ruleId"`
 	ExpireStart string `json:"expireStart"`
 	ExpireEnd   string `json:"expireEnd"`
 }
@@ -20,6 +21,7 @@ func parseCoupon(result gjson.Result) (error, Coupon) {
 	coupon.Code = result.Get("code").Str
 	coupon.Remark = result.Get("remark").Str
 	coupon.Name = result.Get("name").Str
+	coupon.RuleId = result.Get("ruleId").Str
 	coupon.ExpireStart = result.Get("expireStart").Str
 	coupon.ExpireEnd = result.Get("expireEnd").Str
 	return nil, coupon
@@ -38,7 +40,7 @@ func (session *Session) GetCoupon() (error, []Coupon) {
 	var total int64 = 20
 	var status = "1"        // 1->有效 | 3->已过期
 	var page int64 = 1      // 初始页数
-	var pageSize int64 = 10 // 默认 20
+	var pageSize int64 = 20 // 默认 20
 	couponList := make([]Coupon, 0)
 	for (page-1)*pageSize <= total {
 		data := CouponListParam{

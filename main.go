@@ -276,6 +276,7 @@ func stepCapacity(session *sams.Session, bruteTime int) error {
 	var c []byte
 	c = append(c, []byte(fmt.Sprintf("########## 获取当前可用配送时间【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	err, content := session.CheckCapacity(bruteTime)
+	c = append(c, content...)
 	if err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 		conf.OutputBytes(c)
@@ -289,8 +290,6 @@ func stepCapacity(session *sams.Session, bruteTime int) error {
 		default:
 			return conf.GotoCartStep
 		}
-	} else {
-		c = append(c, content...)
 	}
 
 	if session.Setting.BruteCapacity && session.FloorInfo.StoreInfo.StoreType == 2 {

@@ -72,7 +72,7 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 	}
 	if len(session.CouponList) > 0 {
 		for _, v := range session.CouponList {
-			_data.CouponList = append(_data.CouponList, CouponInfo{PromotionId: v.Code, StoreId: session.FloorInfo.StoreInfo.StoreId})
+			_data.CouponList = append(_data.CouponList, CouponInfo{PromotionId: v.RuleId, StoreId: session.FloorInfo.StoreInfo.StoreId})
 		}
 	}
 

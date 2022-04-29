@@ -128,7 +128,7 @@ type CommitPayParam struct {
 	StoreInfo          StoreInfo          `json:"storeInfo"`
 	ShortageDesc       string             `json:"shortageDesc"`
 	PayMethodId        string             `json:"payMethodId"`
-	CouponList         []CouponInfo       `json:"couponList"`
+	CouponList         []CouponInfo       `json:"couponList,omitempty"`
 }
 
 type IOSCommitPayParam struct {
