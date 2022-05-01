@@ -15,9 +15,9 @@ type OrderInfo struct {
 }
 
 type PayInfo struct {
-	PayInfo    string `json:"PayInfo"`
-	OutTradeNo string `json:"OutTradeNo"`
-	TotalAmt   int64  `json:"TotalAmt"`
+	PayInfo    string `json:"payInfo"`
+	OutTradeNo string `json:"outTradeNo"`
+	TotalAmt   int64  `json:"totalAmt"`
 }
 
 type CouponInfo struct {
@@ -40,9 +40,9 @@ func (session *Session) GetOrderInfo(result gjson.Result) (error, OrderInfo) {
 		PayAmount: result.Get("data.payAmount").Str,
 		Channel:   result.Get("data.channel").Str,
 		PayInfo: PayInfo{
-			PayInfo:    result.Get("data.PayInfo.PayInfo").Str,
-			OutTradeNo: result.Get("data.PayInfo.OutTradeNo").Str,
-			TotalAmt:   result.Get("data.PayInfo.TotalAmt").Int(),
+			PayInfo:    result.Get("data.payInfo.PayInfo").Str,
+			OutTradeNo: result.Get("data.payInfo.OutTradeNo").Str,
+			TotalAmt:   result.Get("data.payInfo.TotalAmt").Int(),
 		},
 	}
 	return nil, order

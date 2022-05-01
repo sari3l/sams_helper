@@ -17,10 +17,15 @@ type AutoFixPurchaseLimitSet struct {
 	FixOnline  bool `yaml:"fixOnline"`
 }
 
-type SupplySet struct {
-	Mode      int      `yaml:"mode"`
+type SupplyParseSet struct {
 	IsEnabled bool     `yaml:"isEnabled"`
+	Mode      int      `yaml:"mode"`
 	KeyWords  []string `yaml:"keyWords"`
+}
+
+type SupplySet struct {
+	AddForce bool           `yaml:"addForce"`
+	ParseSet SupplyParseSet `yaml:"parseSet"`
 }
 
 type SleepTimeSet struct {
@@ -40,11 +45,19 @@ type AutoInputSet struct {
 	InputCouponList []int `yaml:"inputCouponList"`
 }
 
+type MoneySet struct {
+	AmountMin  int64 `yaml:"amountMin"`
+	AmountMax  int64 `yaml:"amountMax"`
+	TotalLimit int64 `yaml:"totalLimit"`
+	TotalCalc  int64
+}
+
 type Setting struct {
 	AuthToken               string                  `yaml:"authToken"`
 	RunMode                 int                     `yaml:"runMode"`
 	SupplySet               SupplySet               `yaml:"supplySet"`
 	BruteCapacity           bool                    `yaml:"bruteCapacity"`
+	UpdateStoreForce        bool                    `yaml:"updateStoreForce"`
 	SleepTimeSet            SleepTimeSet            `yaml:"sleepTimeSet"`
 	DeviceType              int64                   `yaml:"deviceType"`
 	DeliveryType            int64                   `yaml:"deliveryType"`
@@ -58,6 +71,7 @@ type Setting struct {
 	NoticeSet               notice.NoticerSet       `yaml:"noticeSet"`
 	RunUnlimited            bool                    `yaml:"runUnlimited"`
 	AutoInputSet            AutoInputSet            `yaml:"autoInputSet"`
+	MoneySet                MoneySet                `yaml:"moneySet"`
 }
 
 func InitSetting() (error, Setting) {
