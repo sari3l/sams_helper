@@ -160,3 +160,15 @@ type GetPageDataParam struct {
 	Longitude     string  `json:"longitude"`
 	AddressInfo   Address `json:"addressInfo"`
 }
+
+var GetPageMoreDataAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/decoration/portal/show/getPageModuleData"
+
+type GetPageDataMoreParam struct {
+	Uid           string  `json:"uid"`
+	PageContentId string  `json:"pageContentId"`
+	PageModuleId  string  `json:"pageModuleId"`
+	ModuleDataNum int64   `json:"moduleDataNum"`
+	UseNew        bool    `json:"UseNew"`
+	ApiVersion    int64   `json:"apiVersion"`
+	AddressInfo   Address `json:"addressInfo"`
+}

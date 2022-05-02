@@ -112,7 +112,7 @@ stepGoodsLoop:
 		} else if err == conf.GotoCartStep {
 			goto stepCartLoop
 		} else if err == conf.NoMatchDeliverMode {
-			return err
+			goto stepStoreLoop
 		} else {
 			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepGoodsSleep) * time.Millisecond)
 			goto stepGoodsLoop
@@ -396,7 +396,7 @@ GetGoodsLoop:
 	var c []byte
 	c = append(c, []byte(fmt.Sprintf("########## 获取保供商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	validGoods := sams.NormalGoodsV2{}
-	err, goodsList := session.GetGuaranteedSupplyGoods()
+	err, goodsList := session.GetGuaranteedSupplyGoodsV2()
 	if err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] 保供监控错误：%s\n", err))...)
 		conf.OutputBytes(c)

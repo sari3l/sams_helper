@@ -22,6 +22,23 @@ func parseNormalGoodsV2(result gjson.Result) (error, NormalGoodsV2) {
 	return nil, normalGoods
 }
 
+func (session *Session) GetGuaranteedSupplyMoreGoods() (error, []NormalGoodsV2) {
+	var goodsList = make([]NormalGoodsV2, 0)
+	err, result := session.GetPageMoreData("1187641882302384150", "1210005874370846742")
+	if err != nil {
+		return err, nil
+	}
+	for _, v := range result.PageModuleVOList.Array() {
+		if v.Get("moduleSign").Str == "goodsModule" {
+			for _, v2 := range v.Get("renderContent.goodsList").Array() {
+				_, goods := parseNormalGoodsV2(v2)
+				goodsList = append(goodsList, goods)
+			}
+		}
+	}
+	return nil, goodsList
+}
+
 func (session *Session) GetGuaranteedSupplyGoods() (error, []NormalGoodsV2) {
 	var goodsList = make([]NormalGoodsV2, 0)
 	err, result := session.GetPageData("1187641882302384150")
@@ -36,5 +53,20 @@ func (session *Session) GetGuaranteedSupplyGoods() (error, []NormalGoodsV2) {
 			}
 		}
 	}
+	return nil, goodsList
+}
+
+func (session *Session) GetGuaranteedSupplyGoodsV2() (error, []NormalGoodsV2) {
+	var goodsList = make([]NormalGoodsV2, 0)
+	err, result := session.GetGuaranteedSupplyGoods()
+	if err != nil {
+		return err, nil
+	}
+	goodsList = append(goodsList, result...)
+	err, resultMore := session.GetGuaranteedSupplyMoreGoods()
+	if err != nil {
+		return err, nil
+	}
+	goodsList = append(goodsList, resultMore...)
 	return nil, goodsList
 }

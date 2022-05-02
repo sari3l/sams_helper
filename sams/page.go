@@ -17,6 +17,24 @@ func parsePageContent(result gjson.Result) (error, PageContent) {
 	return nil, pageContent
 }
 
+func (session *Session) GetPageMoreData(pageId string, moduleId string) (error, PageContent) {
+	data := GetPageDataMoreParam{
+		Uid:           session.Uid,
+		PageContentId: pageId,
+		PageModuleId:  moduleId,
+		ModuleDataNum: 2,
+		ApiVersion:    1,
+		UseNew:        true,
+		AddressInfo:   session.Address,
+	}
+	dataStr, _ := json.Marshal(data)
+	err, result := session.Request.POST(GetPageMoreDataAPI, dataStr)
+	if err != nil {
+		return err, PageContent{}
+	}
+	return parsePageContent(result)
+}
+
 func (session *Session) GetPageData(pageId string) (error, PageContent) {
 	data := GetPageDataParam{
 		Uid:           session.Uid,
