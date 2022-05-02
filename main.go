@@ -84,29 +84,29 @@ stepStoreLoop:
 	}
 stepCartLoop:
 	if err := stepCart(session); err != nil {
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartSleep) * time.Millisecond)
 		if session.Setting.UpdateStoreForce {
 			goto stepStoreLoop
 		} else if err == conf.GotoExit {
 			return nil
 		} else {
-			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartSleep) * time.Millisecond)
 			goto stepCartLoop
 		}
 	}
 stepCartShowLoop:
 	if err := stepCartShow(session); err != nil {
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartShowSleep) * time.Millisecond)
 		if err == conf.GotoStoreStep {
 			goto stepStoreLoop
 		} else if err == conf.GotoCartStep {
-			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartShowSleep) * time.Millisecond)
 			goto stepCartLoop
 		} else {
-			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCartShowSleep) * time.Millisecond)
 			goto stepCartShowLoop
 		}
 	}
 stepGoodsLoop:
 	if err := stepGoods(session); err != nil {
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepGoodsSleep) * time.Millisecond)
 		if err == conf.GotoStoreStep {
 			goto stepStoreLoop
 		} else if err == conf.GotoCartStep {
@@ -114,7 +114,6 @@ stepGoodsLoop:
 		} else if err == conf.NoMatchDeliverMode {
 			goto stepStoreLoop
 		} else {
-			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepGoodsSleep) * time.Millisecond)
 			goto stepGoodsLoop
 		}
 	}
@@ -122,6 +121,7 @@ stepGoodsLoop:
 	bruteTime := 1
 stepCapacityLoop:
 	if err := stepCapacity(session, bruteTime); err != nil {
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCapacitySleep) * time.Millisecond)
 		if err == conf.GotoStoreStep {
 			goto stepStoreLoop
 		} else if err == conf.GotoCartStep {
@@ -131,16 +131,15 @@ stepCapacityLoop:
 			if capacityLoopCount >= 20 {
 				goto stepStoreLoop
 			} else {
-				time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCapacitySleep) * time.Millisecond)
 				goto stepCapacityLoop
 			}
 		} else {
-			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepCapacitySleep) * time.Millisecond)
 			goto stepCapacityLoop
 		}
 	}
 stepOrderLoop:
 	if err := stepOrder(session); err != nil {
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepOrderSleep) * time.Millisecond)
 		if err == conf.GotoStoreStep {
 			goto stepStoreLoop
 		} else if err == conf.GotoCartStep {
@@ -151,7 +150,6 @@ stepOrderLoop:
 			bruteTime += 1
 			goto stepCapacityLoop
 		} else {
-			time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepOrderSleep) * time.Millisecond)
 			goto stepOrderLoop
 		}
 	}
