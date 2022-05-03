@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
+	"sams_helper/tools"
 	"time"
 )
 
@@ -90,7 +91,7 @@ func (session *Session) SetCapacity(tryTime int) (error, []byte) {
 		}
 		if len(_end) >= tryTime {
 			session.SettleDeliveryInfo.ExpectArrivalEndTime = _end[len(_end)-tryTime]
-			c = append(c, []byte(fmt.Sprintf("爆破配送时间范围：%s - %s\n", conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), conf.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime)))...)
+			c = append(c, []byte(fmt.Sprintf("爆破配送时间范围：%s - %s\n", tools.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalTime), tools.UnixToTime(session.SettleDeliveryInfo.ExpectArrivalEndTime)))...)
 			isSet = true
 		}
 	}

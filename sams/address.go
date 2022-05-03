@@ -5,7 +5,16 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
+	"sams_helper/tools"
 )
+
+type AddressVO struct {
+	DetailAddress string `json:"detailAddress"`
+	CityName      string `json:"cityName"`
+	CountryName   string `json:"countryName"`
+	DistrictName  string `json:"districtName"`
+	ProvinceName  string `json:"provinceName"`
+}
 
 type Address struct {
 	AddressId       string `json:"addressId"`
@@ -23,6 +32,16 @@ type Address struct {
 	Longitude       string `json:"longitude"`       // 维度
 	CreateTime      string `json:"createTime"`      // 创建时间
 	UpdateTime      string `json:"updateTime"`      // 更新时间
+}
+
+func (this *Address) ToAddressVO() AddressVO {
+	return AddressVO{
+		DetailAddress: this.DetailAddress,
+		CityName:      this.CityName,
+		CountryName:   this.CountryName,
+		DistrictName:  this.DistrictName,
+		ProvinceName:  this.ProvinceName,
+	}
 }
 
 func parseAddress(addressData gjson.Result) (error, Address) {
@@ -91,7 +110,7 @@ func (session *Session) ChooseAddress() error {
 		if session.Setting.AutoInputSet.IsEnabled {
 			fmt.Println("[!] 自动输入开启，但解析 InputAddress 错误，请手动输入或检查配置")
 		}
-		index = conf.InputSelect(len(addressList))
+		index = tools.InputSelect(len(addressList))
 	}
 	if err = session.SetAddress(addressList[index]); err != nil {
 		return err

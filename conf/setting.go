@@ -1,9 +1,8 @@
 package conf
 
 import (
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"sams_helper/notice"
+	"sams_helper/tools"
 )
 
 type ProxySet struct {
@@ -24,18 +23,20 @@ type SupplyParseSet struct {
 }
 
 type SupplySet struct {
-	AddForce bool           `yaml:"addForce"`
-	ParseSet SupplyParseSet `yaml:"parseSet"`
+	AddForce       bool           `yaml:"addForce"`
+	ParseSet       SupplyParseSet `yaml:"parseSet"`
+	ShowCartAlways bool           `yaml:"showCartAlways"`
 }
 
 type SleepTimeSet struct {
-	StepStoreSleep    int `yaml:"stepStoreSleep"`
-	StepCartSleep     int `yaml:"stepCartSleep"`
-	StepCartShowSleep int `yaml:"stepCartShowSleep"`
-	StepGoodsSleep    int `yaml:"stepGoodsSleep"`
-	StepCapacitySleep int `yaml:"stepCapacitySleep"`
-	StepOrderSleep    int `yaml:"stepOrderSleep"`
-	StepSupplySleep   int `yaml:"stepSupplySleep"`
+	StepStoreSleep        int `yaml:"stepStoreSleep"`
+	StepCartSleep         int `yaml:"stepCartSleep"`
+	StepCartShowSleep     int `yaml:"stepCartShowSleep"`
+	StepGoodsSleep        int `yaml:"stepGoodsSleep"`
+	StepCapacitySleep     int `yaml:"stepCapacitySleep"`
+	StepOrderSleep        int `yaml:"stepOrderSleep"`
+	StepSupplySleep       int `yaml:"stepSupplySleep"`
+	StepGoodsHotModeSleep int `yaml:"stepGoodsHotModeSleep"`
 }
 
 type AutoInputSet struct {
@@ -50,6 +51,12 @@ type MoneySet struct {
 	AmountMax  int64 `yaml:"amountMax"`
 	TotalLimit int64 `yaml:"totalLimit"`
 	TotalCalc  int64
+}
+
+type AddGoodsFromFileSet struct {
+	IsEnabled     bool `yaml:"isEnabled"`
+	Mode          int  `yaml:"mode"`
+	ShowGoodsInfo bool `yaml:"showGoodsInfo"`
 }
 
 type Setting struct {
@@ -72,18 +79,14 @@ type Setting struct {
 	RunUnlimited            bool                    `yaml:"runUnlimited"`
 	AutoInputSet            AutoInputSet            `yaml:"autoInputSet"`
 	MoneySet                MoneySet                `yaml:"moneySet"`
+	AddGoodsFromFileSet     AddGoodsFromFileSet     `yaml:"addGoodsFromFileSet"`
 }
 
 func InitSetting() (error, Setting) {
 	setting := Setting{}
-	file, err := ioutil.ReadFile("config.yaml")
+	err := tools.ReadFromYaml("config.yaml", &setting)
 	if err != nil {
-		return err, setting
-	}
-
-	err = yaml.Unmarshal(file, &setting)
-	if err != nil {
-		return err, setting
+		return err, Setting{}
 	}
 	return nil, setting
 }

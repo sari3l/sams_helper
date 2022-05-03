@@ -103,6 +103,10 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 			return conf.NoMatchDeliverMode, gjson.Result{}
 		case "FAIL":
 			return conf.FAILErr, gjson.Result{}
+		case "CART_GOODS_SPU_EXCEED_LIMIT":
+			return conf.CartFullErr, gjson.Result{}
+		case "GET_DELIVERY_INFO_ERROR":
+			return conf.GetDeliveryErr, gjson.Result{}
 		case "NotCheckShopPendingErr":
 			return conf.NotCheckShopPendingErr, gjson.Result{}
 		case "REQUEST_ERROR":

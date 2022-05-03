@@ -2,7 +2,7 @@ package sams
 
 import (
 	"fmt"
-	"sams_helper/conf"
+	"sams_helper/tools"
 )
 
 func (session *Session) ChoosePayment() error {
@@ -17,7 +17,7 @@ func (session *Session) ChoosePayment() error {
 		if session.Setting.AutoInputSet.IsEnabled {
 			fmt.Println("[!] 自动输入开启，但解析 InputPayMethod 错误，请手动输入或检查配置")
 		}
-		index = conf.InputSelect(4)
+		index = tools.InputSelect(4)
 	}
 	switch index {
 	case 0:

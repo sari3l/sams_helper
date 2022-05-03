@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
+	"sams_helper/tools"
 )
 
 type Coupon struct {
@@ -71,14 +72,14 @@ func (session *Session) ChooseCoupons() error {
 		return conf.NoValidCouponErr
 	}
 	for i, addr := range couponList {
-		fmt.Printf("[%2v] 名称：%-15s 有效期：%s - %s 简介：%-30q\n", i, addr.Name, conf.UnixToTime(addr.ExpireStart), conf.UnixToTime(addr.ExpireEnd), addr.Remark)
+		fmt.Printf("[%2v] 名称：%-15s 有效期：%s - %s 简介：%-30q\n", i, addr.Name, tools.UnixToTime(addr.ExpireStart), tools.UnixToTime(addr.ExpireEnd), addr.Remark)
 	}
 	var indexes []int
 	if session.Setting.AutoInputSet.IsEnabled {
 		fmt.Printf("[>] 自动输入：%v\n", session.Setting.AutoInputSet.InputCouponList)
 		indexes = session.Setting.AutoInputSet.InputCouponList
 	} else {
-		indexes = conf.InputIntList(len(couponList))
+		indexes = tools.InputIntList(len(couponList))
 	}
 	if len(indexes) == 0 {
 		fmt.Printf("[>] %s\n", conf.NoChooseCouponErr)

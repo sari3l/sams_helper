@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
+	"strconv"
 )
 
 type Goods struct {
@@ -23,23 +24,60 @@ type AddCartGoods struct {
 	LabelList        string `json:"labelList"`
 }
 
-func (goods NormalGoodsV2) ToAddCartGoods() AddCartGoods {
+type DelCartGoods struct {
+	SpuId     string `json:"spuId"`
+	StoreId   string `json:"storeId"`
+	Price     string `json:"price"`
+	GoodsName string `json:"goodsName"`
+}
+
+func (goods ShowGoods) ToAddCartGoods(quantity int64) AddCartGoods {
 	return AddCartGoods{
 		IsSelected:       true,
-		IncreaseQuantity: 1,
+		IncreaseQuantity: quantity,
 		SpuId:            goods.SpuId,
 		StoreId:          goods.StoreId,
 		LabelList:        "",
 	}
 }
 
-type NormalGoodsV2 struct {
+func (goods NormalGoods) ToAddCartGoods(quantity int64) AddCartGoods {
+	return AddCartGoods{
+		IsSelected:       true,
+		IncreaseQuantity: quantity,
+		SpuId:            goods.SpuId,
+		StoreId:          goods.StoreId,
+		LabelList:        "",
+	}
+}
+
+func (goods NormalGoods) ToDelCartGoods() DelCartGoods {
+	return DelCartGoods{
+		SpuId:     goods.SpuId,
+		StoreId:   goods.StoreId,
+		Price:     fmt.Sprintf("%d.%d", goods.Price/100, goods.Price%100),
+		GoodsName: goods.GoodsName,
+	}
+}
+
+func (goods ShowGoods) ToNormalGoods() NormalGoods {
+	return NormalGoods{
+		SpuId:     goods.SpuId,
+		StoreId:   goods.StoreId,
+		Price:     goods.Price,
+		GoodsName: goods.Title,
+		BrandId:   goods.BrandId,
+	}
+}
+
+type ShowGoods struct {
 	SpuId         string `json:"spuId"`
 	StoreId       string `json:"storeId"`
 	Title         string `json:"title"`
 	SubTitle      string `json:"subTitle"`
 	Price         int64  `json:"price"`
 	StockQuantity int64  `json:"stockQuantity"`
+	BrandId       string `json:"brandId"`
 }
 
 func (this NormalGoods) ToGoods() Goods {
@@ -72,6 +110,25 @@ type NormalGoods struct {
 	InvalidReason   string          `json:"invalidReason"`
 	Quantity        int64           `json:"quantity"`
 	PurchaseLimitV0 PurchaseLimitV0 `json:"purchaseLimitV0"`
+	IsSelected      bool            `json:"isSelected"`
+}
+
+func parseShowGoods(result gjson.Result) (error, ShowGoods) {
+	normalGoods := ShowGoods{}
+	normalGoods.SpuId = result.Get("spuId").Str
+	normalGoods.StoreId = result.Get("storeId").Str
+	normalGoods.Title = result.Get("title").Str
+	normalGoods.SubTitle = result.Get("subTitle").Str
+	normalGoods.BrandId = result.Get("brandId").Str
+	for _, v := range result.Get("priceInfo").Array() {
+		if priceStr := v.Get("priceTypeName").Str; priceStr == "销售价" || priceStr == "锁价" {
+			price, _ := strconv.ParseInt(v.Get("price").Str, 10, 64)
+			normalGoods.Price = price
+		}
+	}
+	stockQuantity, _ := strconv.ParseInt(result.Get("stockInfo.stockQuantity").Str, 10, 64)
+	normalGoods.StockQuantity = stockQuantity
+	return nil, normalGoods
 }
 
 func parsePurchaseLimitVO(result gjson.Result) (error, PurchaseLimitV0) {
@@ -100,6 +157,7 @@ func parseNormalGoods(result gjson.Result) (error, NormalGoods) {
 	normalGoods.Price = result.Get("price").Int()
 	normalGoods.InvalidReason = result.Get("invalidReason").Str
 	normalGoods.Quantity = result.Get("quantity").Int()
+	normalGoods.IsSelected = result.Get("isSelected").Bool()
 	_, purchaseLimitV0 := parsePurchaseLimitVO(result.Get("purchaseLimitVO"))
 	normalGoods.PurchaseLimitV0 = purchaseLimitV0
 	return nil, normalGoods

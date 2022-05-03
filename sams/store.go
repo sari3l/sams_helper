@@ -3,7 +3,14 @@ package sams
 import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
+	"strconv"
 )
+
+type StoreInfoVO struct {
+	StoreId           string  `json:"storeId"`
+	StoreType         string  `json:"storeType"`
+	StoreDeliveryAttr []int64 `json:"storeDeliveryAttr"`
+}
 
 type Store struct {
 	StoreId                 string  `json:"storeId"`
@@ -14,6 +21,14 @@ type Store struct {
 	StoreDeliveryTemplateId string  `json:"storeDeliveryTemplateId"`
 	AreaBlockId             string  `json:"areaBlockId"`
 	AllDeliveryAttrList     []int64 `json:"allDeliveryAttrList"`
+}
+
+func (this *Store) ToStoreInfoVO() StoreInfoVO {
+	return StoreInfoVO{
+		StoreId:           this.StoreId,
+		StoreType:         strconv.FormatInt(this.StoreType, 10),
+		StoreDeliveryAttr: this.AllDeliveryAttrList,
+	}
 }
 
 func parseStore(storeData gjson.Result) (error, Store) {

@@ -37,12 +37,13 @@ type CouponListParam struct {
 var CartAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/getUserCart"
 
 type CartParam struct {
-	StoreList         []Store `json:"storeList"`
-	AddressId         string  `json:"addressId"`
-	Uid               string  `json:"uid"`
-	DeliveryType      string  `json:"deliveryType"`
-	HomePagelongitude string  `json:"homePagelongitude"`
-	HomePagelatitude  string  `json:"homePagelatitude"`
+	StoreList          []Store `json:"storeList"`
+	AddressId          string  `json:"addressId"`
+	Uid                string  `json:"uid"`
+	DeliveryType       string  `json:"deliveryType"`
+	HomePagelongitude  string  `json:"homePagelongitude"`
+	HomePagelatitude   string  `json:"homePagelatitude"`
+	ParentDeliveryType string  `json:"parentDeliveryType,omitempty"`
 }
 
 var ModifyCartGoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/modifyCartGoodsInfo"
@@ -57,6 +58,13 @@ var AddCartGoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/c
 type AddCartGoodsInfoParam struct {
 	CartGoodsInfoList []AddCartGoods `json:"cartGoodsInfoList"`
 	Uid               string         `json:"uid"`
+}
+
+var DelCartGoodsInfoAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/cart/batchDelGoods"
+
+type DelCartGoodsInfoParam struct {
+	CartGoodsList []DelCartGoods `json:"cartGoodsList"`
+	Uid           string         `json:"uid"`
 }
 
 // 商品
@@ -171,4 +179,22 @@ type GetPageDataMoreParam struct {
 	UseNew        bool    `json:"UseNew"`
 	ApiVersion    int64   `json:"apiVersion"`
 	AddressInfo   Address `json:"addressInfo"`
+}
+
+// Search
+
+var GoodsPortalSearchAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/goods-portal/spu/search"
+
+type GoodsPortalSearchParam struct {
+	Filter          []string      `json:"filter"`
+	Uid             string        `json:"uid"`
+	UidType         int64         `json:"uidType"`
+	PageSize        int64         `json:"pageSize"`
+	Sort            int64         `json:"sort"`
+	StoreInfoVOList []StoreInfoVO `json:"storeInfoVOList"`
+	Keyword         string        `json:"keyword"`
+	UserUid         string        `json:"userUid"`
+	AddressVO       AddressVO     `json:"addressVO"`
+	IsFastDelivery  bool          `json:"isFastDelivery"`
+	PageNum         int64         `json:"pageNum"`
 }

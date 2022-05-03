@@ -6,11 +6,11 @@ authToken: "<authToken>"
 # 运行模式
 # 1->山姆抢购 | 2->保供抢购
 runMode: 1
-# 运力暴力模式
-bruteCapacity: true
 # 配送方式
 # 1->极速达 | 2->全城配
 deliveryType: 2
+# 运力暴力模式（仅全城配有效）
+bruteCapacity: false
 # 更新购物车前强制更新商店信息，早中时间抢购建议开启
 updateStoreForce: false
 
@@ -93,10 +93,21 @@ noticeSet:
 # 永不停歇（下单成功不退出）
 runUnlimited: false
 
+# 自动（模糊）搜索、强制添加指定商品
+addGoodsFromFileSet:
+  # 是否开启
+  isEnabled: false
+  # 加载方式 1->冷加载 | 2->热加载
+  mode: 1
+  # 显示商品细节
+  showGoodsInfo: false
+
 # 保供抢购关键字黑白名单筛选
 supplySet:
   # 不管是否有库存数量，强制添加进购物车
   addForce: false
+  # 总是输出购物车信息（不建议开启）
+  showCartAlways: false
   # 黑白名单筛选
   parseSet:
     # 是否开启
@@ -151,3 +162,5 @@ sleepTimeSet:
   stepOrderSleep: 100
   # 请求保供商品信息
   stepSupplySleep: 1000
+  # 热加载睡眠时间
+  stepGoodsHotModeSleep: 10000
