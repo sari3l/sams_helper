@@ -3,6 +3,7 @@ package sams
 import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
+	"strings"
 )
 
 func parseGoodsList(g gjson.Result) (error, []ShowGoods) {
@@ -14,8 +15,17 @@ func parseGoodsList(g gjson.Result) (error, []ShowGoods) {
 	return nil, goodsList
 }
 
+func goodsTitleMatch(goods []ShowGoods, keyword string) (error, []ShowGoods) {
+	goodsList := make([]ShowGoods, 0)
+	for _, v := range goods {
+		if strings.Contains(v.Title, keyword) {
+			goodsList = append(goodsList, v)
+		}
+	}
+	return nil, goodsList
+}
+
 func (session *Session) GetGoodsFromSearch(keyword string) (error, []ShowGoods) {
-	// 这里要加循环
 	var goodsList = make([]ShowGoods, 0)
 	var total int64 = 20
 	var page int64 = 1      // 初始页数
@@ -45,6 +55,7 @@ func (session *Session) GetGoodsFromSearch(keyword string) (error, []ShowGoods) 
 		total = result.Get("data.totalCount").Int()
 		page += 1
 		_, goodsListTmp := parseGoodsList(result)
+		_, goodsListTmp = goodsTitleMatch(goodsListTmp, keyword)
 		goodsList = append(goodsList, goodsListTmp...)
 	}
 	return nil, goodsList

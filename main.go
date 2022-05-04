@@ -230,6 +230,7 @@ func stepCart(session *sams.Session) error {
 	}
 	return nil
 }
+
 func stepCartShow(session *sams.Session) error {
 	var c []byte
 	var amount int64
@@ -237,9 +238,11 @@ func stepCartShow(session *sams.Session) error {
 	session.GoodsList = make([]sams.Goods, 0)
 	for _, v := range session.Cart.FloorInfoList {
 		if v.FloorId == session.FloorId {
+			var _removeAmount int64
 			for index, goods := range v.NormalGoodsList {
-				if !goods.IsSelected {
+				if session.Setting.CartSelectedStateSync && !goods.IsSelected {
 					c = append(c, []byte(fmt.Sprintf("[未勾选] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+					_removeAmount += goods.Quantity * goods.Price
 					continue
 				}
 				session.GoodsList = append(session.GoodsList, goods.ToGoods())
@@ -252,8 +255,9 @@ func stepCartShow(session *sams.Session) error {
 				StoreType:               v.StoreInfo.StoreType,
 			}
 			_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
-			c = append(c, []byte(fmt.Sprintf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100))...)
+			_amount -= _removeAmount
 			amount += _amount
+			c = append(c, []byte(fmt.Sprintf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100))...)
 		}
 	}
 
@@ -325,6 +329,12 @@ func stepGoods(session *sams.Session) error {
 			return conf.NoMatchDeliverMode
 		default:
 			return conf.GotoGoodsStep
+		}
+	} else {
+		session.DeliveryInfoVO = sams.DeliveryInfoVO{
+			StoreDeliveryTemplateId: session.SettleInfo.SettleDelivery.StoreDeliveryTemplateId,
+			DeliveryModeId:          session.SettleInfo.SettleDelivery.DeliveryModeIdList[0],
+			StoreType:               session.Setting.StoreType,
 		}
 	}
 	return nil
@@ -480,14 +490,13 @@ HotStartLoop:
 	var c []byte
 	var goodsList map[string]int64
 
-ReadFromYamlLoop:
 	c = append(c, []byte(fmt.Sprintf("########## 获取 goodsList.yaml 中商品描述内容【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	err, newFileMd5 := tools.FileMd5Calc(fileName)
 	if err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 		tools.OutputBytes(c)
 		time.Sleep(1000 * time.Millisecond)
-		goto ReadFromYamlLoop
+		goto HotStartLoop
 	}
 
 	err = tools.ReadFromYaml(fileName, &goodsList)
@@ -495,18 +504,20 @@ ReadFromYamlLoop:
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 		tools.OutputBytes(c)
 		time.Sleep(1000 * time.Millisecond)
-		goto ReadFromYamlLoop
+		goto HotStartLoop
 	}
 
-	if fileMd5 != newFileMd5 {
-		c = append(c, []byte(fmt.Sprintf("########## 检测待获取商品列表更新【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	if len(session.StoreList) == 0 {
+		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoStoreInitErr))...)
+		tools.OutputBytes(c)
+		time.Sleep(1000 * time.Millisecond)
+		goto HotStartLoop
+	}
 
-		if len(session.StoreList) == 0 {
-			c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.NoStoreInitErr))...)
-			tools.OutputBytes(c)
-			time.Sleep(1000 * time.Millisecond)
-			goto HotStartLoop
-		}
+	if fileMd5 == newFileMd5 {
+		c = append(c, []byte(fmt.Sprintln("[>] 预期商品文件列表未变化"))...)
+	} else {
+		c = append(c, []byte(fmt.Sprintf("########## 检测待获取商品列表更新【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 
 		if len(cartGoodsListHistory) > 0 {
 			c = append(c, []byte(fmt.Sprintln("[>] 删除历史购物车信息"))...)
@@ -524,7 +535,6 @@ ReadFromYamlLoop:
 		}
 
 		fileMd5 = newFileMd5
-
 		for goodsName, goodsQuantity := range goodsList {
 			if goodsQuantity == 0 {
 				goodsQuantity = 1
@@ -536,18 +546,23 @@ ReadFromYamlLoop:
 				continue
 			}
 			cartGoodsListHistory = result
-			c = append(c, []byte(fmt.Sprintf("[>] 发现商品数量：%d\n", len(result)))...)
-			addGoodsList := make([]sams.AddCartGoods, 0)
-			for _, v := range result {
-				if session.Setting.AddGoodsFromFileSet.ShowGoodsInfo {
-					c = append(c, []byte(fmt.Sprintf("[+] 准备添加商品：%s，数量：%v\n", v.Title, goodsQuantity))...)
+			if len(result) == 0 {
+				c = append(c, []byte(fmt.Sprintln("[!] 未查询到相关产品信息"))...)
+			} else {
+				c = append(c, []byte(fmt.Sprintf("[>] 发现商品数量：%d\n", len(result)))...)
+				addGoodsList := make([]sams.AddCartGoods, 0)
+				for _, v := range result {
+					if session.Setting.AddGoodsFromFileSet.ShowGoodsInfo {
+						c = append(c, []byte(fmt.Sprintf("[+] 准备添加商品：%s，数量：%v\n", v.Title, goodsQuantity))...)
+					}
+					addGoodsList = append(addGoodsList, v.ToAddCartGoods(goodsQuantity))
 				}
-				addGoodsList = append(addGoodsList, v.ToAddCartGoods(goodsQuantity))
+				if err = session.AddCartGoodsInfo(addGoodsList); err != nil {
+					c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+				} else {
+					c = append(c, []byte(fmt.Sprintln("[>] 添加商品成功"))...)
+				}
 			}
-			if err = session.AddCartGoodsInfo(addGoodsList); err != nil {
-				c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
-			}
-			c = append(c, []byte(fmt.Sprintln("[>] 添加商品成功"))...)
 		}
 	}
 	tools.OutputBytes(c)

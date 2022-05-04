@@ -129,7 +129,7 @@ func (session *Session) CheckCapacity(tryTime int) (error, []byte) {
 	}
 	_data := CapacityDataParam{}
 	_data.PerDateList = perDateList
-	_data.StoreDeliveryTemplateId = session.Cart.FloorInfoList[0].StoreInfo.StoreDeliveryTemplateId
+	_data.StoreDeliveryTemplateId = session.DeliveryInfoVO.StoreDeliveryTemplateId
 	switch session.Setting.DeviceType {
 	case 2:
 		data := MiniProgramCapacityDataParam{

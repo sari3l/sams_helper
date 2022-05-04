@@ -80,6 +80,7 @@ type Setting struct {
 	AutoInputSet            AutoInputSet            `yaml:"autoInputSet"`
 	MoneySet                MoneySet                `yaml:"moneySet"`
 	AddGoodsFromFileSet     AddGoodsFromFileSet     `yaml:"addGoodsFromFileSet"`
+	CartSelectedStateSync   bool                    `yaml:"cartSelectedStateSync"`
 }
 
 func InitSetting() (error, Setting) {

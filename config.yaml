@@ -13,9 +13,13 @@ deliveryType: 2
 bruteCapacity: false
 # 更新购物车前强制更新商店信息，早中时间抢购建议开启
 updateStoreForce: false
+# 全平台购物车勾选状态同步
+# 注意：1. 同一件商品，极速达全城配相互切换时，若商品有货则默认勾选
+#      2. 其他情景未知
+cartSelectedStateSync: false
 
 ###############################
-# 下单金额设置，非必须不需修改
+# 下单金额限制，非必须不需修改
 ###############################
 moneySet:
   # 单次订单金额下限（元）
@@ -93,14 +97,16 @@ noticeSet:
 # 永不停歇（下单成功不退出）
 runUnlimited: false
 
-# 自动（模糊）搜索、强制添加指定商品
+# （精准）自动搜索、强制添加指定商品
+# 注：通过此功能无货商品可提前加入购物车
 addGoodsFromFileSet:
   # 是否开启
   isEnabled: false
-  # 加载方式 1->冷加载 | 2->热加载
+  # 加载方式，冷加载只执行一次，热加载每隔 stepGoodsHotModeSleep 循环执行
+  # 1->冷加载 | 2->热加载
   mode: 1
   # 显示商品细节
-  showGoodsInfo: false
+  showGoodsInfo: true
 
 # 保供抢购关键字黑白名单筛选
 supplySet:
