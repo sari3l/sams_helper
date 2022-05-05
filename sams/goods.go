@@ -16,6 +16,7 @@ type Goods struct {
 	StoreType  int64  `json:"storeType"`
 	GoodsName  string
 	Price      int64
+	Weight     float64
 }
 
 type AddCartGoods struct {
@@ -81,15 +82,16 @@ type ShowGoods struct {
 	Weight        float64 `json:"weight"`
 }
 
-func (this NormalGoods) ToGoods() Goods {
+func (goods NormalGoods) ToGoods() Goods {
 	return Goods{
 		IsSelected: true,
-		Quantity:   this.Quantity,
-		SpuId:      this.SpuId,
-		StoreId:    this.StoreId,
-		StoreType:  this.StoreType,
-		GoodsName:  this.GoodsName,
-		Price:      this.Price,
+		Quantity:   goods.Quantity,
+		SpuId:      goods.SpuId,
+		StoreId:    goods.StoreId,
+		StoreType:  goods.StoreType,
+		GoodsName:  goods.GoodsName,
+		Price:      goods.Price,
+		Weight:     goods.Weight,
 	}
 }
 
@@ -115,6 +117,7 @@ type NormalGoods struct {
 	PurchaseLimitV0 PurchaseLimitV0 `json:"purchaseLimitV0"`
 	IsSelected      bool            `json:"isSelected"`
 	StockQuantity   int64           `json:"stockQuantity"`
+	Weight          float64         `json:"weight"`
 }
 
 func parseShowGoods(result gjson.Result) (error, ShowGoods) {
@@ -164,6 +167,7 @@ func parseNormalGoods(result gjson.Result) (error, NormalGoods) {
 	normalGoods.Quantity = result.Get("quantity").Int()
 	normalGoods.StockQuantity = result.Get("stockQuantity").Int()
 	normalGoods.IsSelected = result.Get("isSelected").Bool()
+	normalGoods.Weight = result.Get("weight").Num
 	_, purchaseLimitV0 := parsePurchaseLimitVO(result.Get("purchaseLimitVO"))
 	normalGoods.PurchaseLimitV0 = purchaseLimitV0
 	return nil, normalGoods

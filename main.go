@@ -264,11 +264,11 @@ func stepCartShow(session *sams.Session) error {
 		if v.FloorId == session.FloorId {
 			for index, goods := range v.NormalGoodsList {
 				if session.Setting.CartSelectedStateSync && !goods.IsSelected {
-					c = append(c, []byte(fmt.Sprintf("[未勾选] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+					c = append(c, []byte(fmt.Sprintf("[未勾选] %s 数量：%v 单价：%d.%d 重量：%fkg\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100, goods.Weight))...)
 					continue
 				}
 				session.GoodsList = append(session.GoodsList, goods.ToGoods())
-				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d 重量：%fkg\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100, goods.Weight))...)
 				_amount += goods.Quantity * goods.Price
 			}
 			session.FloorInfo = v
@@ -319,21 +319,17 @@ func stepCartShow(session *sams.Session) error {
 	if session.Setting.AutoShardingForOrder && session.Setting.DeliveryType == 1 {
 		var isOverWeight = false
 		var weightAmount int64
-		var weightLimit int64 = 30000000
+		var delGoodsList []sams.DelCartGoods
+		var weightLimit = tools.StringToInt64(session.FloorInfo.WeightThreshold)
 		var goodsListTmp = make([]sams.Goods, 0)
 		for _, v := range session.GoodsList {
 			if isOverWeight {
 				session.GoodsListFuture = append(session.GoodsListFuture, v)
+				delGoodsList = append(delGoodsList, v.ToDelCartGoods())
 			} else {
-				err, showGoods := session.QueryGoodsDetail(v.SpuId)
-				if err != nil {
-					continue
-				}
-				// 单物品超重，需要临时订单
 				for i := int64(1); i <= v.Quantity; i++ {
-					weightAmountTmp := weightAmount + i*int64(showGoods.Weight*1000000)
+					weightAmountTmp := weightAmount + i*int64(v.Weight*1000000)
 					if weightAmountTmp < weightLimit {
-						weightAmount = weightAmountTmp
 						continue
 					} else {
 						v2 := sams.Goods{}
@@ -341,7 +337,12 @@ func stepCartShow(session *sams.Session) error {
 						v2.Quantity -= i - 1
 						session.GoodsListFuture = append(session.GoodsListFuture, v2)
 						v.Quantity = i - 1
-						goodsListTmp = append(goodsListTmp, v)
+						if v.Quantity > 0 {
+							_ = session.ModifyCartGoodsInfo(v)
+							goodsListTmp = append(goodsListTmp, v)
+						} else {
+							delGoodsList = append(delGoodsList, v.ToDelCartGoods())
+						}
 						isOverWeight = true
 						break
 					}
@@ -350,6 +351,7 @@ func stepCartShow(session *sams.Session) error {
 					goodsListTmp = append(goodsListTmp, v)
 				}
 			}
+			weightAmount += v.Quantity * int64(v.Weight*1000000)
 		}
 		if isOverWeight {
 			c = append(c, []byte(fmt.Sprintf("########## 发现超重订单，执行分包【%s】 ###########\n", time.Now().Format("15:04:05")))...)
@@ -357,6 +359,7 @@ func stepCartShow(session *sams.Session) error {
 			for index, v := range session.GoodsList {
 				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d\n", index, v.GoodsName, v.Quantity, v.Price/100, v.Price%100))...)
 			}
+			_ = session.DelCartGoodsInfo(delGoodsList)
 		}
 	}
 
