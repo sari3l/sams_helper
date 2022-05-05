@@ -3,13 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/jinzhu/copier"
 	"net"
 	"sams_helper/conf"
 	"sams_helper/notice"
 	"sams_helper/requests"
 	"sams_helper/sams"
 	"sams_helper/tools"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -52,6 +52,10 @@ func doInitStep() (error, sams.Session) {
 	}
 	if setting.UpdateStoreForce {
 		conf.GotoCartStep = conf.GotoStoreStep
+	}
+	if setting.AutoShardingForOrder {
+		setting.AutoFixPurchaseLimitSet.IsEnabled = true
+		setting.AutoFixPurchaseLimitSet.FixOnline = true
 	}
 
 	// 初始化 requests
@@ -223,30 +227,49 @@ func stepCart(session *sams.Session) error {
 		tools.OutputBytes(c)
 		return conf.GotoExit
 	}
+
+	// 拆分历史恢复
+	if session.Setting.AutoShardingForOrder && len(session.GoodsListFuture) > 0 {
+		c = append(c, []byte(fmt.Sprintf("########## 检测到拆包遗留商品列表【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+		addGoodsList := make([]sams.AddCartGoods, 0)
+		for _, v := range session.GoodsListFuture {
+			addGoodsList = append(addGoodsList, v.ToAddCartGoods(v.Quantity))
+		}
+		if err := session.AddCartGoodsInfo(addGoodsList); err != nil {
+			c = append(c, []byte(fmt.Sprintf("[!] 添加拆包遗留商品失败：%v", err))...)
+			tools.OutputBytes(c)
+			return err
+		} else {
+			c = append(c, []byte(fmt.Sprintf("[>] 添加拆包遗留商品成功，数量：%d\n", len(session.GoodsListFuture)))...)
+			session.GoodsListFuture = make([]sams.Goods, 0)
+		}
+	}
+
 	if err := session.CheckCart(); err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.CheckCartErr))...)
 		tools.OutputBytes(c)
 		return err
 	}
+	tools.OutputBytes(c)
 	return nil
 }
 
 func stepCartShow(session *sams.Session) error {
 	var c []byte
 	var amount int64
-	c = append(c, []byte(fmt.Sprintf("########## 获取购物车中有效商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	c = append(c, []byte(fmt.Sprintf("########## 获取购物车中商品清单【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	session.GoodsList = make([]sams.Goods, 0)
 	for _, v := range session.Cart.FloorInfoList {
+		var _amount int64
 		if v.FloorId == session.FloorId {
-			var _removeAmount int64
 			for index, goods := range v.NormalGoodsList {
 				if session.Setting.CartSelectedStateSync && !goods.IsSelected {
 					c = append(c, []byte(fmt.Sprintf("[未勾选] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
-					_removeAmount += goods.Quantity * goods.Price
 					continue
 				}
 				session.GoodsList = append(session.GoodsList, goods.ToGoods())
 				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+				_amount += goods.Quantity * goods.Price
 			}
 			session.FloorInfo = v
 			session.DeliveryInfoVO = sams.DeliveryInfoVO{
@@ -254,10 +277,13 @@ func stepCartShow(session *sams.Session) error {
 				DeliveryModeId:          v.StoreInfo.DeliveryModeId,
 				StoreType:               v.StoreInfo.StoreType,
 			}
-			_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
-			_amount -= _removeAmount
-			amount += _amount
 			c = append(c, []byte(fmt.Sprintf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100))...)
+			amount += _amount
+		}
+		if v.IsOverWeight && !session.Setting.AutoShardingForOrder {
+			c = append(c, []byte(fmt.Sprintf("[!] %s\n", conf.GoodsOverWeightErr))...)
+			tools.OutputBytes(c)
+			return conf.GotoCartStep
 		}
 	}
 
@@ -286,6 +312,58 @@ func stepCartShow(session *sams.Session) error {
 				tools.OutputBytes(c)
 				return conf.GotoCartStep
 			}
+		}
+	}
+
+	// 极速达过重分包
+	if session.Setting.AutoShardingForOrder && session.Setting.DeliveryType == 1 {
+		var isOverWeight = false
+		var weightAmount int64
+		var weightLimit int64 = 30000000
+		var goodsListTmp = make([]sams.Goods, 0)
+		for _, v := range session.GoodsList {
+			if isOverWeight {
+				session.GoodsListFuture = append(session.GoodsListFuture, v)
+			} else {
+				err, showGoods := session.QueryGoodsDetail(v.SpuId)
+				if err != nil {
+					continue
+				}
+				// 单物品超重，需要临时订单
+				for i := int64(1); i <= v.Quantity; i++ {
+					weightAmountTmp := weightAmount + i*int64(showGoods.Weight*1000000)
+					if weightAmountTmp < weightLimit {
+						weightAmount = weightAmountTmp
+						continue
+					} else {
+						v2 := sams.Goods{}
+						copier.Copy(&v2, &v)
+						v2.Quantity -= i - 1
+						session.GoodsListFuture = append(session.GoodsListFuture, v2)
+						v.Quantity = i - 1
+						goodsListTmp = append(goodsListTmp, v)
+						isOverWeight = true
+						break
+					}
+				}
+				if !isOverWeight {
+					goodsListTmp = append(goodsListTmp, v)
+				}
+			}
+		}
+		if isOverWeight {
+			c = append(c, []byte(fmt.Sprintf("########## 发现超重订单，执行分包【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+			session.GoodsList = goodsListTmp
+			for index, v := range session.GoodsList {
+				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d\n", index, v.GoodsName, v.Quantity, v.Price/100, v.Price%100))...)
+			}
+		}
+	}
+
+	if session.Setting.AutoShardingForOrder && len(session.GoodsListFuture) > 0 {
+		c = append(c, []byte(fmt.Sprintf("########## 拆包下批次待购商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+		for _, goods := range session.GoodsListFuture {
+			c = append(c, []byte(fmt.Sprintf("[~] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
 		}
 	}
 
@@ -380,7 +458,7 @@ func stepOrder(session *sams.Session) error {
 			c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 			tools.OutputBytes(c)
 		}
-		if session.Setting.RunUnlimited {
+		if session.Setting.RunUnlimited || len(session.GoodsListFuture) > 0 {
 			return conf.GotoCartStep
 		} else {
 			return nil
@@ -468,7 +546,7 @@ GetSupplyGoodsLoop:
 				c = append(c, []byte(fmt.Sprintf("[+] 发现可购保供商品: %s, 即将自动添加并下单\n", validGoods.Title))...)
 			}
 			// 自动添加购物车
-			_goodList := []sams.AddCartGoods{validGoods.ToAddCartGoods(1)}
+			_goodList := []sams.AddCartGoods{validGoods.ToNormalGoods().ToAddCartGoods(1)}
 			if err = session.AddCartGoodsInfo(_goodList); err != nil {
 				c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 			} else {
@@ -555,7 +633,7 @@ HotStartLoop:
 					if session.Setting.AddGoodsFromFileSet.ShowGoodsInfo {
 						c = append(c, []byte(fmt.Sprintf("[+] 准备添加商品：%s，数量：%v\n", v.Title, goodsQuantity))...)
 					}
-					addGoodsList = append(addGoodsList, v.ToAddCartGoods(goodsQuantity))
+					addGoodsList = append(addGoodsList, v.ToNormalGoods().ToAddCartGoods(goodsQuantity))
 				}
 				if err = session.AddCartGoodsInfo(addGoodsList); err != nil {
 					c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)

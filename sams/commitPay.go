@@ -3,7 +3,7 @@ package sams
 import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
-	"strconv"
+	"sams_helper/tools"
 )
 
 type OrderInfo struct {
@@ -80,7 +80,7 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 	// 为了对照数据包，特意按设备类型排序观察
 	switch session.Setting.DeviceType {
 	case 2:
-		_amount, _ := strconv.ParseInt(session.FloorInfo.Amount, 10, 64)
+		_amount := tools.StringToInt64(session.FloorInfo.Amount)
 		data := MiniProgramCommitPayParam{
 			CommitPayParam:        _data,
 			Amount:                _amount,

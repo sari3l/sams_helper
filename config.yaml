@@ -97,6 +97,9 @@ noticeSet:
 # 永不停歇（下单成功不退出）
 runUnlimited: false
 
+# 超重订单自动分批下单（仅极速达有效）
+autoShardingForOrder: false
+
 # （精准）自动搜索、强制添加指定商品
 # 注：通过此功能无货商品可提前加入购物车
 addGoodsFromFileSet:

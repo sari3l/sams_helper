@@ -112,6 +112,8 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 		case "REQUEST_ERROR":
 			fmt.Printf("[!] 请求错误 %s\n", result.Get("msg").Str)
 			return conf.RequestErr, gjson.Result{}
+		case "CLOUD_GOODS_OVER_WEIGHT":
+			return conf.GoodsOverWeightErr, gjson.Result{}
 		default:
 			return errors.New(fmt.Sprintf("code: %s %s", result.Get("code"), result.Get("msg").Str)), gjson.Result{}
 		}

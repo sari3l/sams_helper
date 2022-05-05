@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
-	"strconv"
+	"sams_helper/tools"
 )
 
 type Goods struct {
@@ -14,6 +14,8 @@ type Goods struct {
 	SpuId      string `json:"spuId"`
 	StoreId    string `json:"storeId"`
 	StoreType  int64  `json:"storeType"`
+	GoodsName  string
+	Price      int64
 }
 
 type AddCartGoods struct {
@@ -31,7 +33,7 @@ type DelCartGoods struct {
 	GoodsName string `json:"goodsName"`
 }
 
-func (goods ShowGoods) ToAddCartGoods(quantity int64) AddCartGoods {
+func (goods Goods) ToAddCartGoods(quantity int64) AddCartGoods {
 	return AddCartGoods{
 		IsSelected:       true,
 		IncreaseQuantity: quantity,
@@ -41,23 +43,21 @@ func (goods ShowGoods) ToAddCartGoods(quantity int64) AddCartGoods {
 	}
 }
 
-func (goods NormalGoods) ToAddCartGoods(quantity int64) AddCartGoods {
-	return AddCartGoods{
-		IsSelected:       true,
-		IncreaseQuantity: quantity,
-		SpuId:            goods.SpuId,
-		StoreId:          goods.StoreId,
-		LabelList:        "",
-	}
-}
-
-func (goods NormalGoods) ToDelCartGoods() DelCartGoods {
+func (goods Goods) ToDelCartGoods() DelCartGoods {
 	return DelCartGoods{
 		SpuId:     goods.SpuId,
 		StoreId:   goods.StoreId,
 		Price:     fmt.Sprintf("%d.%d", goods.Price/100, goods.Price%100),
 		GoodsName: goods.GoodsName,
 	}
+}
+
+func (goods NormalGoods) ToAddCartGoods(quantity int64) AddCartGoods {
+	return goods.ToGoods().ToAddCartGoods(quantity)
+}
+
+func (goods NormalGoods) ToDelCartGoods() DelCartGoods {
+	return goods.ToGoods().ToDelCartGoods()
 }
 
 func (goods ShowGoods) ToNormalGoods() NormalGoods {
@@ -71,13 +71,14 @@ func (goods ShowGoods) ToNormalGoods() NormalGoods {
 }
 
 type ShowGoods struct {
-	SpuId         string `json:"spuId"`
-	StoreId       string `json:"storeId"`
-	Title         string `json:"title"`
-	SubTitle      string `json:"subTitle"`
-	Price         int64  `json:"price"`
-	StockQuantity int64  `json:"stockQuantity"`
-	BrandId       string `json:"brandId"`
+	SpuId         string  `json:"spuId"`
+	StoreId       string  `json:"storeId"`
+	Title         string  `json:"title"`
+	SubTitle      string  `json:"subTitle"`
+	Price         int64   `json:"price"`
+	StockQuantity int64   `json:"stockQuantity"`
+	BrandId       string  `json:"brandId"`
+	Weight        float64 `json:"weight"`
 }
 
 func (this NormalGoods) ToGoods() Goods {
@@ -87,6 +88,8 @@ func (this NormalGoods) ToGoods() Goods {
 		SpuId:      this.SpuId,
 		StoreId:    this.StoreId,
 		StoreType:  this.StoreType,
+		GoodsName:  this.GoodsName,
+		Price:      this.Price,
 	}
 }
 
@@ -111,24 +114,26 @@ type NormalGoods struct {
 	Quantity        int64           `json:"quantity"`
 	PurchaseLimitV0 PurchaseLimitV0 `json:"purchaseLimitV0"`
 	IsSelected      bool            `json:"isSelected"`
+	StockQuantity   int64           `json:"stockQuantity"`
 }
 
 func parseShowGoods(result gjson.Result) (error, ShowGoods) {
-	normalGoods := ShowGoods{}
-	normalGoods.SpuId = result.Get("spuId").Str
-	normalGoods.StoreId = result.Get("storeId").Str
-	normalGoods.Title = result.Get("title").Str
-	normalGoods.SubTitle = result.Get("subTitle").Str
-	normalGoods.BrandId = result.Get("brandId").Str
+	showGoods := ShowGoods{}
+	showGoods.SpuId = result.Get("spuId").Str
+	showGoods.StoreId = result.Get("storeId").Str
+	showGoods.Title = result.Get("title").Str
+	showGoods.SubTitle = result.Get("subTitle").Str
+	showGoods.BrandId = result.Get("brandId").Str
+	showGoods.Weight = result.Get("weight").Num
 	for _, v := range result.Get("priceInfo").Array() {
 		if priceStr := v.Get("priceTypeName").Str; priceStr == "销售价" || priceStr == "锁价" {
-			price, _ := strconv.ParseInt(v.Get("price").Str, 10, 64)
-			normalGoods.Price = price
+			price := tools.StringToInt64(v.Get("price").Str)
+			showGoods.Price = price
 		}
 	}
-	stockQuantity, _ := strconv.ParseInt(result.Get("stockInfo.stockQuantity").Str, 10, 64)
-	normalGoods.StockQuantity = stockQuantity
-	return nil, normalGoods
+	stockQuantity := tools.StringToInt64(result.Get("stockInfo.stockQuantity").Str)
+	showGoods.StockQuantity = stockQuantity
+	return nil, showGoods
 }
 
 func parsePurchaseLimitVO(result gjson.Result) (error, PurchaseLimitV0) {
@@ -157,6 +162,7 @@ func parseNormalGoods(result gjson.Result) (error, NormalGoods) {
 	normalGoods.Price = result.Get("price").Int()
 	normalGoods.InvalidReason = result.Get("invalidReason").Str
 	normalGoods.Quantity = result.Get("quantity").Int()
+	normalGoods.StockQuantity = result.Get("stockQuantity").Int()
 	normalGoods.IsSelected = result.Get("isSelected").Bool()
 	_, purchaseLimitV0 := parsePurchaseLimitVO(result.Get("purchaseLimitVO"))
 	normalGoods.PurchaseLimitV0 = purchaseLimitV0
@@ -199,4 +205,20 @@ func (session *Session) CheckGoods() error {
 			return conf.OutOfSellErr
 		}
 	}
+}
+
+func (session *Session) QueryGoodsDetail(spuId string) (error, ShowGoods) {
+	data := QueryDetailParam{
+		SpuId: spuId,
+	}
+	for _, v := range session.StoreList {
+		data.StoreInfoVOList = append(data.StoreInfoVOList, v.ToStoreInfoVO())
+	}
+
+	dataStr, _ := json.Marshal(data)
+	err, result := session.Request.POST(QueryDetailAPI, dataStr)
+	if err != nil {
+		return err, ShowGoods{}
+	}
+	return parseShowGoods(result.Get("data"))
 }

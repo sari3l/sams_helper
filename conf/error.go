@@ -43,5 +43,6 @@ var DeliveryTypeErr = errors.New("未知设备类型")
 var NotCheckShopPendingErr = errors.New("请阅读并勾选《购物须知》")
 var RequestErr = errors.New("请求异常")
 var CartFullErr = errors.New("购物车最多99件商品")
+var GoodsOverWeightErr = errors.New("出于交通安全考虑，极速达订单限重30公斤，您的订单已超重，请分开下单")
 
 // 429 429 {"message":"Requests rate limited. stage:service"}

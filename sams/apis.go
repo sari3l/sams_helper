@@ -91,6 +91,20 @@ type SettleParam struct {
 	GoodsList        []Goods        `json:"goodsList"`
 }
 
+var QueryDetailAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/goods-portal/spu/queryDetail"
+
+type QueryDetailParam struct {
+	Source                  string        `json:"source,omitempty"`
+	Channel                 string        `json:"channel,omitempty"`
+	Uid                     string        `json:"uid,omitempty"`
+	StoreInfoVOList         []StoreInfoVO `json:"storeInfoVOList"`
+	AddressVO               Address       `json:"addressVo,omitempty"`
+	StoreId                 string        `json:"storeId,omitempty"`
+	StoreDeliveryTemplateId string        `json:"storeDeliveryTemplateId,omitempty"`
+	SpuId                   string        `json:"spuId"`
+	AreaBlockId             string        `json:"areaBlockId,omitempty"`
+}
+
 // 运力
 
 var CapacityDataAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/delivery/portal/getCapacityData"
@@ -116,27 +130,26 @@ type MiniProgramCapacityDataParam struct {
 var CommitPayAPI = "https://api-sams.walmartmobile.cn/api/v1/sams/trade/settlement/commitPay"
 
 type CommitPayParam struct {
-	GoodsList        []Goods               `json:"goodsList"`
-	InvoiceInfo      map[int64]interface{} `json:"invoiceInfo"`
-	CartDeliveryType int64                 `json:"cartDeliveryType"`
-	FloorId          int64                 `json:"floorId"`
-
-	PurchaserName      string             `json:"purchaserName"`
-	SettleDeliveryInfo SettleDeliveryInfo `json:"settleDeliveryInfo"`
-	PayType            int64              `json:"payType"`
-	Currency           string             `json:"currency"`
-	Channel            string             `json:"channel"`
-	ShortageId         int64              `json:"shortageId"`
-	OrderType          int64              `json:"orderType"`
-	Uid                string             `json:"uid"`
-	AppId              string             `json:"appId"`
-	AddressId          string             `json:"addressId"`
-	DeliveryInfoVO     DeliveryInfoVO     `json:"deliveryInfoVO"`
-	Remark             string             `json:"remark"`
-	StoreInfo          StoreInfo          `json:"storeInfo"`
-	ShortageDesc       string             `json:"shortageDesc"`
-	PayMethodId        string             `json:"payMethodId"`
-	CouponList         []CouponInfo       `json:"couponList,omitempty"`
+	GoodsList          []Goods               `json:"goodsList"`
+	InvoiceInfo        map[int64]interface{} `json:"invoiceInfo"`
+	CartDeliveryType   int64                 `json:"cartDeliveryType"`
+	FloorId            int64                 `json:"floorId"`
+	PurchaserName      string                `json:"purchaserName"`
+	SettleDeliveryInfo SettleDeliveryInfo    `json:"settleDeliveryInfo"`
+	PayType            int64                 `json:"payType"`
+	Currency           string                `json:"currency"`
+	Channel            string                `json:"channel"`
+	ShortageId         int64                 `json:"shortageId"`
+	OrderType          int64                 `json:"orderType"`
+	Uid                string                `json:"uid"`
+	AppId              string                `json:"appId"`
+	AddressId          string                `json:"addressId"`
+	DeliveryInfoVO     DeliveryInfoVO        `json:"deliveryInfoVO"`
+	Remark             string                `json:"remark"`
+	StoreInfo          StoreInfo             `json:"storeInfo"`
+	ShortageDesc       string                `json:"shortageDesc"`
+	PayMethodId        string                `json:"payMethodId"`
+	CouponList         []CouponInfo          `json:"couponList,omitempty"`
 }
 
 type IOSCommitPayParam struct {

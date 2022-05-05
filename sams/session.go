@@ -8,7 +8,7 @@ import (
 type Session struct {
 	AuthToken          string             `json:"auth-token"`
 	FloorId            int64              `json:"floor"`
-	Channel            string             `json:"channel"` // wechat alipay china_unionpay sam_coupon
+	Channel            string             `json:"channel"`
 	SubSaasId          string             `json:"SubSaasId"`
 	Address            Address            `json:"address"`
 	Uid                string             `json:"uid"`
@@ -23,6 +23,7 @@ type Session struct {
 	Capacity           Capacity           `json:"capacity"`
 	Request            requests.Request   `json:"request"`
 	Setting            conf.Setting       `json:"setting"`
+	GoodsListFuture    []Goods            `json:"goodsListFuture"`
 }
 
 func (session *Session) InitSession(request requests.Request, setting conf.Setting) error {

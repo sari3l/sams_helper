@@ -81,6 +81,7 @@ type Setting struct {
 	MoneySet                MoneySet                `yaml:"moneySet"`
 	AddGoodsFromFileSet     AddGoodsFromFileSet     `yaml:"addGoodsFromFileSet"`
 	CartSelectedStateSync   bool                    `yaml:"cartSelectedStateSync"`
+	AutoShardingForOrder    bool                    `yaml:"autoShardingForOrder"`
 }
 
 func InitSetting() (error, Setting) {

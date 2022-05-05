@@ -3,7 +3,7 @@ package sams
 import (
 	"encoding/json"
 	"github.com/tidwall/gjson"
-	"strconv"
+	"sams_helper/tools"
 )
 
 type StoreInfoVO struct {
@@ -26,7 +26,7 @@ type Store struct {
 func (this *Store) ToStoreInfoVO() StoreInfoVO {
 	return StoreInfoVO{
 		StoreId:           this.StoreId,
-		StoreType:         strconv.FormatInt(this.StoreType, 10),
+		StoreType:         tools.Int64ToString(this.StoreType),
 		StoreDeliveryAttr: this.AllDeliveryAttrList,
 	}
 }

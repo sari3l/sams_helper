@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/tidwall/gjson"
 	"sams_helper/conf"
-	"strconv"
+	"sams_helper/tools"
 )
 
 type FloorInfo struct {
@@ -14,6 +14,9 @@ type FloorInfo struct {
 	Quantity        int64         `json:"quantity"`
 	StoreInfo       StoreInfo     `json:"storeInfo"`
 	NormalGoodsList []NormalGoods `json:"normalGoodsList"`
+	IsOverWeight    bool          `json:"isOverWeight"`
+	Weight          string        `json:"weight"`
+	WeightThreshold string        `json:"weightThreshold"`
 }
 
 type Cart struct {
@@ -26,6 +29,9 @@ func parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 	floorInfo.FloorId = result.Get("floorId").Int()
 	floorInfo.Amount = result.Get("amount").Str
 	floorInfo.Quantity = result.Get("quantity").Int()
+	floorInfo.IsOverWeight = result.Get("isOverWeight").Bool()
+	floorInfo.Weight = result.Get("weight").Str
+	floorInfo.WeightThreshold = result.Get("weightThreshold").Str
 	floorInfo.StoreInfo = StoreInfo{
 		StoreId:                 result.Get("storeInfo.storeId").Str,
 		StoreType:               result.Get("storeInfo.storeType").Int(),
@@ -41,20 +47,24 @@ func parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 	}
 
 	// 促销商品
-	for _, promotionGoodsList := range result.Get("promotionFloorGoodsList").Array() {
-		for _, promotionGoods := range promotionGoodsList.Get("promotionGoodsList").Array() {
-			_, p := parseNormalGoods(promotionGoods)
-			floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, p)
-		}
+	for _, v := range result.Get("promotionFloorGoodsList").Array() {
+		_, promotionFloorGoods := parseNormalGoods(v)
+		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, promotionFloorGoods)
+	}
+
+	// 库存不足商品
+	for _, v := range result.Get("shortageStockGoodsList").Array() {
+		_, shortageStockGoods := parseNormalGoods(v)
+		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, shortageStockGoods)
 	}
 
 	// 有时间返回的 amount 为 “0”，为了方便显示按订单重新计算
-	amount, _ := strconv.ParseInt(floorInfo.Amount, 10, 64)
+	amount := tools.StringToInt64(floorInfo.Amount)
 	if amount == 0 {
 		for _, v := range floorInfo.NormalGoodsList {
 			amount += v.Quantity * v.Price
 		}
-		floorInfo.Amount = strconv.FormatInt(amount, 10)
+		floorInfo.Amount = tools.Int64ToString(amount)
 	}
 
 	return nil, floorInfo
@@ -154,20 +164,24 @@ func (session *Session) FixCart() (error, bool, bool) {
 	var removeAmount int64 = 0
 	for index, v := range session.Cart.FloorInfoList {
 		for index2, v2 := range v.NormalGoodsList {
-			if v2.PurchaseLimitV0.LimitNum < v2.Quantity {
+			if v2.PurchaseLimitV0.LimitNum < v2.Quantity || v2.StockQuantity < v2.Quantity {
 				// offline
-				fmt.Printf("[!] 校验发现限购商品：%s，限购数量：%d，现有数量：%d，正在修正中...\n", v2.GoodsName, v2.PurchaseLimitV0.LimitNum, v2.Quantity)
+				limitNum := v2.PurchaseLimitV0.LimitNum
+				if v2.StockQuantity < v2.PurchaseLimitV0.LimitNum {
+					limitNum = v2.StockQuantity
+				}
+				fmt.Printf("[!] 校验发现限购商品：%s，限购数量：%d，库存数量：%d，预购数量：%d，正在修正中...\n", v2.GoodsName, v2.PurchaseLimitV0.LimitNum, v2.StockQuantity, v2.Quantity)
 				if session.Setting.AutoFixPurchaseLimitSet.FixOffline && !session.Setting.AutoFixPurchaseLimitSet.FixOnline {
-					removeQuantity += v2.Quantity - v2.PurchaseLimitV0.LimitNum
-					removeAmount += (v2.Quantity - v2.PurchaseLimitV0.LimitNum) * v2.Price
-					v2.Quantity = v2.PurchaseLimitV0.LimitNum
+					removeQuantity += v2.Quantity - limitNum
+					removeAmount += (v2.Quantity - limitNum) * v2.Price
+					v2.Quantity = limitNum
 					v.NormalGoodsList[index2] = v2
 					isChangedOffline = true
 				}
 				// online
 				if session.Setting.AutoFixPurchaseLimitSet.FixOnline {
 					_goods := v2.ToGoods()
-					_goods.Quantity = v2.PurchaseLimitV0.LimitNum
+					_goods.Quantity = limitNum
 					if err := session.ModifyCartGoodsInfo(_goods); err != nil {
 						return conf.FixCartErr, isChangedOffline, true
 					}
@@ -177,8 +191,8 @@ func (session *Session) FixCart() (error, bool, bool) {
 			}
 		}
 		session.Cart.FloorInfoList[index].Quantity -= removeQuantity
-		_amount, _ := strconv.ParseInt(session.Cart.FloorInfoList[index].Amount, 10, 64)
-		session.Cart.FloorInfoList[index].Amount = strconv.FormatInt(_amount-removeAmount, 10)
+		_amount := tools.StringToInt64(session.Cart.FloorInfoList[index].Amount)
+		session.Cart.FloorInfoList[index].Amount = tools.Int64ToString(_amount - removeAmount)
 	}
 	return nil, isChangedOffline, isChangedOnline
 }
