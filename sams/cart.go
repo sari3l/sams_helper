@@ -48,8 +48,10 @@ func parseFloorInfo(result gjson.Result) (error, FloorInfo) {
 
 	// 促销商品
 	for _, v := range result.Get("promotionFloorGoodsList").Array() {
-		_, promotionFloorGoods := parseNormalGoods(v)
-		floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, promotionFloorGoods)
+		for _, v2 := range v.Get("promotionGoodsList").Array() {
+			_, promotionFloorGoods := parseNormalGoods(v2)
+			floorInfo.NormalGoodsList = append(floorInfo.NormalGoodsList, promotionFloorGoods)
+		}
 	}
 
 	// 库存不足商品

@@ -361,12 +361,12 @@ func stepCartShow(session *sams.Session) error {
 			}
 			_ = session.DelCartGoodsInfo(delGoodsList)
 		}
-	}
 
-	if session.Setting.AutoShardingForOrder && len(session.GoodsListFuture) > 0 {
-		c = append(c, []byte(fmt.Sprintf("########## 拆包下批次待购商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
-		for _, goods := range session.GoodsListFuture {
-			c = append(c, []byte(fmt.Sprintf("[~] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+		if len(session.GoodsListFuture) > 0 {
+			c = append(c, []byte(fmt.Sprintf("########## 分包下批次待购商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+			for _, goods := range session.GoodsListFuture {
+				c = append(c, []byte(fmt.Sprintf("[~] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+			}
 		}
 	}
 
