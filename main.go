@@ -159,7 +159,7 @@ stepOrderLoop:
 			goto stepCartLoop
 		} else if err == conf.GotoCapacityStep {
 			goto stepCapacityLoop
-		} else if err == conf.DecreaseCapacityCountError || err == conf.GetDeliveryErr {
+		} else if err == conf.DecreaseCapacityCountErr || err == conf.GetDeliveryErr {
 			bruteTime += 1
 			goto stepCapacityLoop
 		} else {
@@ -333,7 +333,7 @@ func stepCartShow(session *sams.Session) error {
 						continue
 					} else {
 						v2 := sams.Goods{}
-						copier.Copy(&v2, &v)
+						_ = copier.Copy(&v2, &v)
 						v2.Quantity -= i - 1
 						session.GoodsListFuture = append(session.GoodsListFuture, v2)
 						v.Quantity = i - 1
@@ -476,18 +476,21 @@ func stepOrder(session *sams.Session) error {
 		case conf.CloseOrderTimeExceptionErr, conf.NotDeliverCapCityErr:
 			tools.OutputBytes(c)
 			return conf.GotoCapacityStep
-		case conf.DecreaseCapacityCountError:
+		case conf.DecreaseCapacityCountErr:
 			tools.OutputBytes(c)
-			return conf.DecreaseCapacityCountError
+			return conf.DecreaseCapacityCountErr
 		case conf.GetDeliveryErr:
 			tools.OutputBytes(c)
 			return conf.GotoCartStep
 		case conf.OutOfSellErr:
 			tools.OutputBytes(c)
 			return conf.GotoCartStep
-		case conf.StoreHasClosedError:
+		case conf.StoreHasClosedErr:
 			tools.OutputBytes(c)
 			return conf.GotoStoreStep
+		case conf.GoodsExceedLimitErr:
+			tools.OutputBytes(c)
+			return conf.GotoCartStep
 		default:
 			tools.OutputBytes(c)
 			return conf.GotoCapacityStep
