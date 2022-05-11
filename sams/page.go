@@ -17,10 +17,10 @@ func parsePageContent(result gjson.Result) (error, PageContent) {
 	return nil, pageContent
 }
 
-func (session *Session) GetPageMoreData(pageId string, moduleId string) (error, PageContent) {
+func (session *Session) GetPageMoreData(contentId string, moduleId string) (error, PageContent) {
 	data := GetPageDataMoreParam{
 		Uid:           session.Uid,
-		PageContentId: pageId,
+		PageContentId: contentId,
 		PageModuleId:  moduleId,
 		ModuleDataNum: 2,
 		ApiVersion:    1,

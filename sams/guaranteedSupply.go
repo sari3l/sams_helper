@@ -25,6 +25,9 @@ func (session *Session) GetGuaranteedSupplyGoods() (error, []ShowGoods) {
 	}
 	for _, v := range result.PageModuleVOList.Array() {
 		if v.Get("moduleSign").Str == "goodsModule" {
+			if session.Setting.SupplySet.OnlySupply && !(v.Get("pageModuleId").Str == "1191141370736336662") {
+				continue
+			}
 			for _, v2 := range v.Get("renderContent.goodsList").Array() {
 				_, goods := parseShowGoods(v2)
 				goodsList = append(goodsList, goods)
@@ -41,10 +44,12 @@ func (session *Session) GetGuaranteedSupplyGoodsAll() (error, []ShowGoods) {
 		return err, nil
 	}
 	goodsList = append(goodsList, result...)
-	err, resultMore := session.GetGuaranteedSupplyMoreGoods()
-	if err != nil {
-		return err, nil
+	if !session.Setting.SupplySet.OnlySupply {
+		err, resultMore := session.GetGuaranteedSupplyMoreGoods()
+		if err != nil {
+			return err, nil
+		}
+		goodsList = append(goodsList, resultMore...)
 	}
-	goodsList = append(goodsList, resultMore...)
 	return nil, goodsList
 }

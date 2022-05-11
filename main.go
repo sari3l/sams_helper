@@ -532,7 +532,7 @@ GetSupplyGoodsLoop:
 				if len(keyWord) > 0 && session.Setting.SupplySet.ParseSet.Mode == 2 && strings.Contains(v.Title, keyWord) {
 					isBlack = true
 					break
-				} else if len(keyWord) > 0 && session.Setting.SupplySet.ParseSet.Mode == 1 && strings.Contains(v.Title, keyWord) {
+				} else if len(keyWord) > 0 && session.Setting.SupplySet.ParseSet.Mode == 1 && (strings.Contains(v.Title, keyWord) || strings.Contains(v.SubTitle, keyWord)) {
 					isWhite = true
 					break
 				}

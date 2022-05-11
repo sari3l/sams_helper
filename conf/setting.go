@@ -23,9 +23,10 @@ type SupplyParseSet struct {
 }
 
 type SupplySet struct {
+	OnlySupply     bool           `yaml:"onlySupply"`
 	AddForce       bool           `yaml:"addForce"`
-	ParseSet       SupplyParseSet `yaml:"parseSet"`
 	ShowCartAlways bool           `yaml:"showCartAlways"`
+	ParseSet       SupplyParseSet `yaml:"parseSet"`
 }
 
 type SleepTimeSet struct {
