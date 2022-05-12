@@ -127,7 +127,7 @@ supplySet:
     # 1->白名单 | 2->黑名单
     mode: 1
     # 检测`套餐名`、`套餐内容`有以下关键字，例：["蔬菜", "保供套餐C", "瑞士卷"]
-    keyWords: ["<关键字>"]
+    keyWords: ["<keyWord>"]
 
 # 代理设置
 proxySet:

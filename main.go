@@ -41,6 +41,7 @@ func doExtendStep(session *sams.Session) {
 
 func doInitStep() (error, sams.Session) {
 	// 初始化设置
+	fmt.Println("\n########## 配置文件检查 ##########")
 	err, setting := conf.InitSetting()
 	if err != nil {
 		return err, sams.Session{}
@@ -568,7 +569,7 @@ GetSupplyGoodsLoop:
 
 func stepAddGoodsForce(session *sams.Session) {
 	var fileMd5 string
-	var fileName = "goodsList.yaml"
+	var fileName = tools.GetFilePath("goodsList.yaml")
 	var cartGoodsListHistory []sams.ShowGoods
 HotStartLoop:
 	var c []byte

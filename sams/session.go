@@ -35,14 +35,9 @@ func (session *Session) InitSession(request requests.Request, setting conf.Setti
 }
 
 func (session *Session) CheckSession() error {
-	if len(session.Setting.AuthToken) < 64 {
-		return conf.AuthTokenErr
-	}
-
 	err, _ := session.Request.GET(AddressListAPI)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }

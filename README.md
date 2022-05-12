@@ -6,7 +6,12 @@
 
 ## 使用方式
 
-### 0x01 配置
+### 0x01 运行
+
+1. 从 [Releases](https://github.com/sari3l/sams_helper/releases) 页面下载对应系统版本。
+2. 命令行运行可执行文件（初次运行会自动释放配置文件）。
+
+### 0x02 配置
 
 主要修改 `config.yaml` 文件中以下内容：
 
@@ -21,37 +26,13 @@ noticeType: 0			# 0->不通知, 1->Bark, 2->Server酱，3->OSX 系统语音
 
 其他配置（尤其是通知相关配置）请查看文件内注释自行修改。
 
-### 0x02 运行方式
-
-#### I. 源代码
-
-命令行运行
-
-```shell
-go run main.go
-```
-
-#### II. Release
-
-1. 从 [Releases](https://github.com/sari3l/sams_helper/releases) 页面下载对应系统版本。
-2. 将 [config.yaml](https://github.com/sari3l/sams_helper/blob/main/config.yaml) 单独保存至与执行文件同级目录下并修改。
-   ```plain
-   .
-   ├── LICENSE
-   ├── README.md
-   ├── config.yaml     （配置文件）
-   ├── goodsList.yaml  （商品列表：用于将指定（无货）商品提前加入购物车）
-   └── sams_helper     （程序本体）
-   ```
-3. 命令行运行可执行文件。
-
 ## 功能支持 
 
 | config                | 简介                                   |
 |-----------------------|--------------------------------------|
 | addGoodsFromFileSet   | 自动搜索添加商品（即使无货），允许热加载随时更新             |
 | autoFixPurchaseLimit  | 对限购、库存数量不足的商品自动修正                    |
-| autoInputSet          | 自动选择支付方式、收货地址                        |
+| autoInputSet          | 自动选择支付方式、收货地址、优惠券                    |
 | autoShardingForOrder  | 超重订单自动拆分下单（暂未考虑运费、重量最优解）             |
 | bruteCapacity         | 运力爆破（非常规爆破），全城配下很好用的功能，增大下单成功率       |
 | cartSelectedStateSync | 全平台勾选状态同步，只会下单勾选商品                   |
@@ -60,7 +41,7 @@ go run main.go
 | sleepTimeSet          | 自定义各步骤休眠时间                           |
 | supplySet             | 即时获取保供清单，可强制添加无货保供商品，同时可设置黑白名单限制监控清单 |
 | updateStoreForce      | 强制刷新商店，避免店面突然上下线引起的异常（早中抢购建议开启）      |
-| proxySet              | 代理设置，方便抓包、调试                         |
+| proxySet              | 代理设置，方便抓包、调试，或切换异地避免当地高峰网络堵塞         |
 
 ## 注意事项
 

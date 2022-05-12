@@ -11,7 +11,7 @@ var GotoOrderStep = errors.New("跳转下订购单")
 var GotoExit = errors.New("程序退出")
 
 var RunModeErr = errors.New("运行模式错误，请检查配置")
-var AuthTokenErr = errors.New("auth-token 可能未设置，请检查")
+var AuthTokenErr = errors.New("config.yaml 中 auth-token 可能未设置，请检查")
 var ProxyErr = errors.New("网络错误，请检查是否设置错误代理")
 var NoValidAddressErr = errors.New("没有有效的收货地址，请前往 APP 添加或者检查 Auth-Token 是否正确")
 var CheckStoreErr = errors.New("检查商店信息失败")
