@@ -1,5 +1,5 @@
 ###############################
-# 基础设置
+# 必选 基础设置
 ###############################
 # 山姆会员 Token
 authToken: "<authToken>"
@@ -8,10 +8,15 @@ authToken: "<authToken>"
 runMode: 1
 # 配送方式
 # 1->极速达 | 2->全城配
-deliveryType: 2
+deliveryType: 1
+
+###############################
+# 可选 基础设置
+###############################
 # 运力暴力模式（仅全城配有效）
 bruteCapacity: false
-# 更新购物车前强制更新商店信息，早中时间抢购建议开启
+# 强制更新商店信息，每隔 stepUpdateStoreForceSleep 循环执行
+# 注：早中时间抢购建议开启
 updateStoreForce: false
 # 全平台购物车勾选状态同步
 # 注意：1. 同一件商品，极速达全城配相互切换时，若商品有货则默认勾选
@@ -37,7 +42,7 @@ moneySet:
 deviceType: 1
 # 是否忽略无效商品
 ignoreInvalid: true
-# 商店类型
+# 商店类型（仅占位暂无实际作用）
 # 2->生鲜直达 | 4->极速达 | 8->全球购保税
 storeType: 2
 # 商品类型
@@ -175,3 +180,5 @@ sleepTimeSet:
   stepSupplySleep: 1000
   # 热加载睡眠时间
   stepGoodsHotModeSleep: 10000
+  # 强制更新商店间隔
+  stepUpdateStoreForceSleep: 5000

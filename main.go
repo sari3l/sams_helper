@@ -34,6 +34,11 @@ func doExtendStep(session *sams.Session) {
 		go stepSupply(session)
 	}
 
+	if session.Setting.UpdateStoreForce {
+		//conf.GotoCartStep = conf.GotoStoreStep
+		go checkStoreForce(session)
+	}
+
 	if session.Setting.AddGoodsFromFileSet.IsEnabled {
 		go stepAddGoodsForce(session)
 	}
@@ -51,9 +56,7 @@ func doInitStep() (error, sams.Session) {
 	if !(setting.RunMode == 1 || setting.RunMode == 2) {
 		return conf.RunModeErr, sams.Session{}
 	}
-	if setting.UpdateStoreForce {
-		conf.GotoCartStep = conf.GotoStoreStep
-	}
+
 	if setting.AutoShardingForOrder {
 		setting.AutoFixPurchaseLimitSet.IsEnabled = true
 		setting.AutoFixPurchaseLimitSet.FixOnline = true
@@ -656,4 +659,11 @@ HotStartLoop:
 		goto HotStartLoop
 	}
 	return
+}
+
+func checkStoreForce(session *sams.Session) {
+	for true {
+		_ = stepStore(session)
+		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepUpdateStoreForceSleep) * time.Millisecond)
+	}
 }

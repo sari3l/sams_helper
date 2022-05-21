@@ -16,12 +16,14 @@
 主要修改 `config.yaml` 文件中以下内容：
 
 ```yaml
-authToken: "<authToken>"	# 山姆会员token，从 Header 中获取
-runMode: 1                      # 1-> 山姆抢购，2->保供抢购
-bruteCapacity: false            # 运力爆破模式，开启则会尝试覆盖所有时间
-deliveryType: 2                 # 1->极速达，2->全城配
-ignoreInvalid: true             # 是否忽略无效商品
-noticeType: 0			# 0->不通知, 1->Bark, 2->Server酱，3->OSX 系统语音
+# 山姆会员 Token
+authToken: "74xxxxxxxxxxxx"
+# 运行模式
+# 1->山姆抢购 | 2->保供抢购
+runMode: 1
+# 配送方式
+# 1->极速达 | 2->全城配
+deliveryType: 1
 ```
 
 其他配置（尤其是通知相关配置）请查看文件内注释自行修改。
