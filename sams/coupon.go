@@ -84,7 +84,7 @@ func (session *Session) ChooseCoupons() error {
 	if len(indexes) == 0 {
 		fmt.Printf("[>] %s\n", conf.NoChooseCouponErr)
 	} else {
-		fmt.Printf("[>] 已选取优惠券 %v", indexes)
+		fmt.Printf("[>] 已选取优惠券 %v\n", indexes)
 		for _, v := range indexes {
 			session.CouponList = append(session.CouponList, couponList[v])
 		}

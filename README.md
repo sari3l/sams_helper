@@ -1,4 +1,7 @@
 # sams_helper
+[![](https://img.shields.io/github/license/sari3l/sams_helper)]()
+[![](https://img.shields.io/github/v/release/sari3l/sams_helper)]()
+[![](https://img.shields.io/github/downloads/sari3l/sams_helper/total)]()
 
 <img src="https://github.com/sari3l/sams_helper/blob/main/pics/sams_helper.png"/>
 
