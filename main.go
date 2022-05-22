@@ -649,6 +649,20 @@ HotStartLoop:
 					c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 				} else {
 					c = append(c, []byte(fmt.Sprintln("[>] 添加商品成功"))...)
+					for _, v := range result {
+						if session.Setting.AddGoodsFromFileSet.ShowGoodsInfo {
+							c = append(c, []byte(fmt.Sprintf("[x] 修改商品数量：%s，数量：%v\n",
+										v.Title, goodsQuantity))...)
+						}
+
+						modifyGoodsQuantity := v.ToNormalGoods().ToGoods()
+						modifyGoodsQuantity.Quantity = goodsQuantity
+						if err = session.ModifyCartGoodsInfo(modifyGoodsQuantity); err != nil {
+							c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
+						} else {
+							c = append(c, []byte(fmt.Sprintln("[>] 修改商品数量成功"))...)
+						}
+					}
 				}
 			}
 		}
