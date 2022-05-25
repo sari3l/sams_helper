@@ -8,6 +8,11 @@ import (
 	"sams_helper/tools"
 )
 
+type CouponInfo struct {
+	PromotionId string `json:"promotionId"`
+	StoreId     string `json:"storeId"`
+}
+
 type Coupon struct {
 	Code        string `json:"code"`
 	Remark      string `json:"remark"`
@@ -30,7 +35,7 @@ func parseCoupon(result gjson.Result) (error, Coupon) {
 
 func parseCouponList(result gjson.Result) (error, []Coupon) {
 	var couponList []Coupon
-	for _, v := range result.Get("data.couponInfoList").Array() {
+	for _, v := range result.Get("couponInfoList").Array() {
 		_, coupon := parseCoupon(v)
 		couponList = append(couponList, coupon)
 	}
@@ -55,7 +60,7 @@ func (session *Session) GetCoupon() (error, []Coupon) {
 		if err != nil {
 			return err, nil
 		}
-		total = result.Get("data.total").Int()
+		total = result.Get("total").Int()
 		page += 1
 		_, couponListTmp := parseCouponList(result)
 		couponList = append(couponList, couponListTmp...)
@@ -72,7 +77,7 @@ func (session *Session) ChooseCoupons() error {
 		return conf.NoValidCouponErr
 	}
 	for i, addr := range couponList {
-		fmt.Printf("[%2v] 名称：%-15s 有效期：%s - %s 简介：%-30q\n", i, addr.Name, tools.UnixToTime(addr.ExpireStart), tools.UnixToTime(addr.ExpireEnd), addr.Remark)
+		fmt.Printf("[%v] 名称：%-15s 有效期：%s - %s 简介：%-30q\n", i, addr.Name, tools.UnixToTime(addr.ExpireStart), tools.UnixToTime(addr.ExpireEnd), addr.Remark)
 	}
 	var indexes []int
 	if session.Setting.AutoInputSet.IsEnabled {

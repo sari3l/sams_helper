@@ -1,9 +1,9 @@
 # sams_helper
-[![](https://img.shields.io/github/license/sari3l/sams_helper)]()
-[![](https://img.shields.io/github/v/release/sari3l/sams_helper)]()
-[![](https://img.shields.io/github/downloads/sari3l/sams_helper/total)]()
+[![](https://img.shields.io/github/license/sari3l/sams_helper)](https://github.com/sari3l/sams_helper/blob/main/LICENSE)
+[![](https://img.shields.io/github/v/release/sari3l/sams_helper)](https://github.com/sari3l/sams_helper/releases)
+[![](https://img.shields.io/github/downloads/sari3l/sams_helper/total)](https://github.com/sari3l/sams_helper/releases)
 
-<img src="https://github.com/sari3l/sams_helper/blob/main/pics/sams_helper.png"/>
+<img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/sams_helper.png"/>
 
 借鉴自： https://github.com/robGoods/sams v1.0
 
@@ -86,8 +86,8 @@ deliveryType: 1
 
 ## 效果
 
-<img src="https://github.com/sari3l/sams_helper/blob/main/pics/pic_1.jpeg" width="50%"/><br/>
-<img src="https://github.com/sari3l/sams_helper/blob/main/pics/pic_2.png" width="50%"/><br/>
+<img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/pic_1.jpeg" width="50%"/><br/>
+<img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/pic_2.png" width="50%"/><br/>
 
 ## 声明
 

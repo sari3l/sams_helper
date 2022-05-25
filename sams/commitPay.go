@@ -20,11 +20,6 @@ type PayInfo struct {
 	TotalAmt   int64  `json:"totalAmt"`
 }
 
-type CouponInfo struct {
-	PromotionId string `json:"promotionId"`
-	StoreId     string `json:"storeId"`
-}
-
 type SettleDeliveryInfo struct {
 	DeliveryType         int64  `json:"deliveryType"`
 	DeliveryDesc         string `json:"deliveryDesc"`
@@ -35,21 +30,21 @@ type SettleDeliveryInfo struct {
 
 func (session *Session) GetOrderInfo(result gjson.Result) (error, OrderInfo) {
 	order := OrderInfo{
-		IsSuccess: result.Get("data.isSuccess").Bool(),
-		OrderNo:   result.Get("data.orderNo").Str,
-		PayAmount: result.Get("data.payAmount").Str,
-		Channel:   result.Get("data.channel").Str,
+		IsSuccess: result.Get("isSuccess").Bool(),
+		OrderNo:   result.Get("orderNo").Str,
+		PayAmount: result.Get("payAmount").Str,
+		Channel:   result.Get("channel").Str,
 		PayInfo: PayInfo{
-			PayInfo:    result.Get("data.payInfo.PayInfo").Str,
-			OutTradeNo: result.Get("data.payInfo.OutTradeNo").Str,
-			TotalAmt:   result.Get("data.payInfo.TotalAmt").Int(),
+			PayInfo:    result.Get("payInfo.PayInfo").Str,
+			OutTradeNo: result.Get("payInfo.OutTradeNo").Str,
+			TotalAmt:   result.Get("payInfo.TotalAmt").Int(),
 		},
 	}
 	return nil, order
 }
 
 func (session *Session) CommitPay() (error, OrderInfo) {
-	_data := CommitPayParam{
+	data := CommitPayParam{
 		DeliveryInfoVO:     session.DeliveryInfoVO,
 		StoreInfo:          session.FloorInfo.StoreInfo,
 		Channel:            session.Channel,
@@ -72,7 +67,7 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 	}
 	if len(session.CouponList) > 0 {
 		for _, v := range session.CouponList {
-			_data.CouponList = append(_data.CouponList, CouponInfo{PromotionId: v.RuleId, StoreId: session.FloorInfo.StoreInfo.StoreId})
+			data.CouponList = append(data.CouponList, CouponInfo{PromotionId: v.RuleId, StoreId: session.FloorInfo.StoreInfo.StoreId})
 		}
 	}
 
@@ -80,10 +75,10 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 	// 为了对照数据包，特意按设备类型排序观察
 	switch session.Setting.DeviceType {
 	case 2:
-		_amount := tools.StringToInt64(session.FloorInfo.Amount)
+		amount := tools.StringToInt64(session.SettleInfo.TotalAmount)
 		data := MiniProgramCommitPayParam{
-			CommitPayParam:        _data,
-			Amount:                _amount,
+			CommitPayParam:        data,
+			Amount:                amount,
 			IsSelectShoppingNotes: true,
 			LabelList:             "",
 			SaasId:                session.Setting.SassId,
@@ -92,8 +87,8 @@ func (session *Session) CommitPay() (error, OrderInfo) {
 		dataStr, _ = json.Marshal(data)
 	default: // ios
 		data := IOSCommitPayParam{
-			CommitPayParam: _data,
-			Amount:         session.FloorInfo.Amount,
+			CommitPayParam: data,
+			Amount:         session.SettleInfo.TotalAmount,
 			TradeType:      "APP",
 			PurchaserId:    "",
 			IsSelfPickup:   0,

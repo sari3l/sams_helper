@@ -195,11 +195,11 @@ func (session *Session) CheckGoods() error {
 	if err != nil {
 		return err
 	}
-	if result.Get("data.isHasException").Bool() == false {
+	if result.Get("isHasException").Bool() == false {
 		return nil
 	} else {
 		fmt.Printf("\n======== 以下商品已过期 ========\n")
-		for index, v := range result.Get("data.popUpInfo.goodsList").Array() {
+		for index, v := range result.Get("popUpInfo.goodsList").Array() {
 			_, goods := parseNormalGoods(v)
 			fmt.Printf("[%v] 商品名：%s 商品ID：%s 商店ID：%v 总价：%d.%d\n", index, goods.GoodsName, goods.SpuId, goods.StoreId, goods.Price/100, goods.Price%100)
 		}
@@ -224,5 +224,5 @@ func (session *Session) QueryGoodsDetail(spuId string) (error, ShowGoods) {
 	if err != nil {
 		return err, ShowGoods{}
 	}
-	return parseShowGoods(result.Get("data"))
+	return parseShowGoods(result)
 }

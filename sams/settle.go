@@ -44,35 +44,31 @@ type SettleInfo struct {
 	FloorName       string         `json:"floorName"`
 	SettleDelivery  SettleDelivery `json:"settleDelivery"`
 	DeliveryAddress Address        `json:"deliveryAddress"`
+	CouponFee       string         `json:"couponFee"`
+	TotalAmount     string         `json:"totalAmount"`
 }
 
 func (session *Session) GetSettleInfo(result gjson.Result) error {
 	r := SettleInfo{}
 
-	for _, v := range result.Get("data.settleDelivery").Array() {
+	for _, v := range result.Get("settleDelivery").Array() {
 		_, settleDelivery := parseSettleDelivery(v)
 		r.SettleDelivery = settleDelivery
 
 	}
-	r.SaasId = result.Get("data.saasId").Str
-	r.Uid = result.Get("data.uid").Str
-	r.FloorId = result.Get("data.floorId").Int()
-	r.FloorName = result.Get("data.floorName").Str
-	err, address := parseAddress(result.Get("data.deliveryAddress"))
+	r.SaasId = result.Get("saasId").Str
+	r.Uid = result.Get("uid").Str
+	r.FloorId = result.Get("floorId").Int()
+	r.FloorName = result.Get("floorName").Str
+	err, address := parseAddress(result.Get("deliveryAddress"))
 	if err == nil {
 		r.DeliveryAddress = address
 	}
+	r.CouponFee = result.Get("couponFee").Str
+	r.TotalAmount = result.Get("totalAmount").Str
 
 	session.SettleInfo = r
 	return nil
-}
-
-type StoreInfo struct {
-	StoreId                 string `json:"storeId"`
-	StoreType               int64  `json:"storeType"`
-	AreaBlockId             string `json:"areaBlockId"`
-	StoreDeliveryTemplateId string `json:"-"`
-	DeliveryModeId          string `json:"-"`
 }
 
 type DeliveryInfoVO struct {
@@ -88,10 +84,16 @@ func (session *Session) CheckSettleInfo() error {
 		DeliveryInfoVO:   session.DeliveryInfoVO,
 		CartDeliveryType: session.Setting.DeliveryType,
 		StoreInfo:        session.FloorInfo.StoreInfo,
-		CouponList:       make([]string, 0),
+		CouponList:       make([]CouponInfo, 0),
 		IsSelfPickup:     0,
 		FloorId:          session.FloorId,
 		GoodsList:        session.GoodsList,
+	}
+
+	if len(session.CouponList) > 0 {
+		for _, v := range session.CouponList {
+			data.CouponList = append(data.CouponList, CouponInfo{PromotionId: v.RuleId, StoreId: session.FloorInfo.StoreInfo.StoreId})
+		}
 	}
 
 	dataStr, _ := json.Marshal(data)

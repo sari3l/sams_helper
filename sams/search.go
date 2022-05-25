@@ -8,7 +8,7 @@ import (
 
 func parseGoodsList(g gjson.Result) (error, []ShowGoods) {
 	goodsList := make([]ShowGoods, 0)
-	for _, v := range g.Get("data.dataList").Array() {
+	for _, v := range g.Get("dataList").Array() {
 		_, goods := parseShowGoods(v)
 		goodsList = append(goodsList, goods)
 	}
@@ -52,7 +52,7 @@ func (session *Session) GetGoodsFromSearch(keyword string) (error, []ShowGoods) 
 		if err != nil {
 			return err, nil
 		}
-		total = result.Get("data.totalCount").Int()
+		total = result.Get("totalCount").Int()
 		page += 1
 		_, goodsListTmp := parseGoodsList(result)
 		_, goodsListTmp = goodsTitleMatch(goodsListTmp, keyword)

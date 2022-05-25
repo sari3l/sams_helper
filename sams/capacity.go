@@ -60,14 +60,14 @@ func parseCapacity(result gjson.Result) (error, CapCityResponse) {
 
 func (session *Session) GetCapacity(result gjson.Result) error {
 	var capCityResponseList []CapCityResponse
-	for _, v := range result.Get("data.capcityResponseList").Array() {
+	for _, v := range result.Get("capcityResponseList").Array() {
 		_, product := parseCapacity(v)
 		capCityResponseList = append(capCityResponseList, product)
 	}
 	session.Capacity = Capacity{
 		Data:                      result.String(),
 		CapCityResponseList:       capCityResponseList,
-		PortalPerformanceTemplate: result.Get("data.getPortalPerformanceTemplateResponse").Str,
+		PortalPerformanceTemplate: result.Get("getPortalPerformanceTemplateResponse").Str,
 	}
 	return nil
 }

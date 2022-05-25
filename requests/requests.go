@@ -83,7 +83,7 @@ func (request *Request) do(req *http.Request) (error, gjson.Result) {
 		result := gjson.Parse(string(body))
 		switch result.Get("code").Str {
 		case "Success":
-			return nil, result
+			return nil, result.Get("data")
 		case "AUTH_FAIL":
 			return conf.AuthFailErr, gjson.Result{}
 		case "LIMITED":

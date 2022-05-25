@@ -85,7 +85,7 @@ type SettleParam struct {
 	DeliveryInfoVO   DeliveryInfoVO `json:"deliveryInfoVO"`
 	CartDeliveryType int64          `json:"cartDeliveryType"`
 	StoreInfo        StoreInfo      `json:"storeInfo"`
-	CouponList       []string       `json:"couponList"`
+	CouponList       []CouponInfo   `json:"couponList"`
 	IsSelfPickup     int64          `json:"isSelfPickup"`
 	FloorId          int64          `json:"floorId"`
 	GoodsList        []Goods        `json:"goodsList"`

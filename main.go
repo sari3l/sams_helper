@@ -390,7 +390,7 @@ func stepCartShow(session *sams.Session) error {
 
 func stepGoods(session *sams.Session) error {
 	var c []byte
-	c = append(c, []byte(fmt.Sprintf("########## 开始校验当前商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
+	c = append(c, []byte(fmt.Sprintf("########## 开始校验当前商品、优惠券【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 	if err := session.CheckGoods(); err != nil {
 		c = append(c, []byte(fmt.Sprintf("[!] %s\n", err))...)
 		tools.OutputBytes(c)
@@ -416,12 +416,16 @@ func stepGoods(session *sams.Session) error {
 			return conf.GotoGoodsStep
 		}
 	} else {
+		couponFee := tools.StringToInt64(session.SettleInfo.CouponFee)
+		totalAmount := tools.StringToInt64(session.SettleInfo.TotalAmount)
+		c = append(c, []byte(fmt.Sprintf("[>] 校验商品成功\n[>] 优惠券抵扣：%d.%d, 最终总金额：%d.%d\n", couponFee/100, couponFee%100, totalAmount/100, totalAmount%100))...)
 		session.DeliveryInfoVO = sams.DeliveryInfoVO{
 			StoreDeliveryTemplateId: session.SettleInfo.SettleDelivery.StoreDeliveryTemplateId,
 			DeliveryModeId:          session.SettleInfo.SettleDelivery.DeliveryModeIdList[0],
 			StoreType:               session.Setting.StoreType,
 		}
 	}
+	tools.OutputBytes(c)
 	return nil
 }
 
@@ -652,7 +656,7 @@ HotStartLoop:
 					for _, v := range result {
 						if session.Setting.AddGoodsFromFileSet.ShowGoodsInfo {
 							c = append(c, []byte(fmt.Sprintf("[x] 修改商品数量：%s，数量：%v\n",
-										v.Title, goodsQuantity))...)
+								v.Title, goodsQuantity))...)
 						}
 
 						modifyGoodsQuantity := v.ToNormalGoods().ToGoods()
@@ -677,7 +681,7 @@ HotStartLoop:
 
 func checkStoreForce(session *sams.Session) {
 	for true {
-		_ = stepStore(session)
 		time.Sleep(time.Duration(session.Setting.SleepTimeSet.StepUpdateStoreForceSleep) * time.Millisecond)
+		_ = stepStore(session)
 	}
 }

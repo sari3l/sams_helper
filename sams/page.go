@@ -12,8 +12,8 @@ type PageContent struct {
 
 func parsePageContent(result gjson.Result) (error, PageContent) {
 	pageContent := PageContent{}
-	pageContent.PageContentVO = result.Get("data.pageContentVO")
-	pageContent.PageModuleVOList = result.Get("data.pageModuleVOList")
+	pageContent.PageContentVO = result.Get("pageContentVO")
+	pageContent.PageModuleVOList = result.Get("pageModuleVOList")
 	return nil, pageContent
 }
 

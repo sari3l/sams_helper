@@ -99,7 +99,7 @@ func (session *Session) SetCartInfo(result gjson.Result) error {
 	cart.FloorInfoList = make([]FloorInfo, 0)
 	switch session.Setting.DeviceType {
 	case 1:
-		for _, v := range result.Get("data.floorInfoList").Array() {
+		for _, v := range result.Get("floorInfoList").Array() {
 			if "失效商品" == v.Get("floorName").Str {
 				continue
 			}
@@ -107,10 +107,10 @@ func (session *Session) SetCartInfo(result gjson.Result) error {
 			cart.FloorInfoList = append(cart.FloorInfoList, floor)
 		}
 	case 2:
-		for _, v := range result.Get("data.miniProgramGoodsInfo").Array() {
+		for _, v := range result.Get("miniProgramGoodsInfo").Array() {
 			_, floor := session.parseMiniProgramGoodsInfo(v)
-			floor.Amount = result.Get("data.selectedAmount").Str
-			floor.Quantity = result.Get("data.selectedNumber").Int()
+			floor.Amount = result.Get("selectedAmount").Str
+			floor.Quantity = result.Get("selectedNumber").Int()
 			cart.FloorInfoList = append(cart.FloorInfoList, floor)
 		}
 	default:

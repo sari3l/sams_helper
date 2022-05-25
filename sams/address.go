@@ -70,7 +70,7 @@ func (session *Session) GetAddress() (error, []Address) {
 		return err, nil
 	}
 	var addressList = make([]Address, 0)
-	validAddress := result.Get("data.addressList").Array()
+	validAddress := result.Get("addressList").Array()
 	for _, addressData := range validAddress {
 		err, address := parseAddress(addressData)
 		if err != nil {

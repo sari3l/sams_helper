@@ -12,6 +12,14 @@ type StoreInfoVO struct {
 	StoreDeliveryAttr []int64 `json:"storeDeliveryAttr"`
 }
 
+type StoreInfo struct {
+	StoreId                 string `json:"storeId"`
+	StoreType               int64  `json:"storeType"`
+	AreaBlockId             string `json:"areaBlockId"`
+	StoreDeliveryTemplateId string `json:"-"`
+	DeliveryModeId          string `json:"-"`
+}
+
 type Store struct {
 	StoreId                 string  `json:"storeId"`
 	StoreName               string  `json:"storeName"`
@@ -60,7 +68,7 @@ func (session *Session) GetStoreList() error {
 		return err
 	}
 	storeList := make([]Store, 0)
-	for _, storeData := range result.Get("data.storeList").Array() {
+	for _, storeData := range result.Get("storeList").Array() {
 		err, store := parseStore(storeData)
 		if err != nil {
 			return err
