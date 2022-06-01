@@ -268,11 +268,11 @@ func stepCartShow(session *sams.Session) error {
 		if v.FloorId == session.FloorId {
 			for index, goods := range v.NormalGoodsList {
 				if session.Setting.CartSelectedStateSync && !goods.IsSelected {
-					c = append(c, []byte(fmt.Sprintf("[未勾选] %s 数量：%v 单价：%d.%d 重量：%fkg\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100, goods.Weight))...)
+					c = append(c, []byte(fmt.Sprintf("[未勾选] %s 数量：%v 单价：%s 重量：%fkg\n", goods.GoodsName, goods.Quantity, tools.SPrintMoney(goods.Price), goods.Weight))...)
 					continue
 				}
 				session.GoodsList = append(session.GoodsList, goods.ToGoods())
-				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d 重量：%fkg\n", index, goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100, goods.Weight))...)
+				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%s 重量：%fkg\n", index, goods.GoodsName, goods.Quantity, tools.SPrintMoney(goods.Price), goods.Weight))...)
 				_amount += goods.Quantity * goods.Price
 			}
 			session.FloorInfo = v
@@ -281,7 +281,7 @@ func stepCartShow(session *sams.Session) error {
 				DeliveryModeId:          v.StoreInfo.DeliveryModeId,
 				StoreType:               v.StoreInfo.StoreType,
 			}
-			c = append(c, []byte(fmt.Sprintf("[>] 订单总价：%d.%d\n", _amount/100, _amount%100))...)
+			c = append(c, []byte(fmt.Sprintf("[>] 订单总价：%s\n", tools.SPrintMoney(_amount)))...)
 			amount += _amount
 		}
 		if v.IsOverWeight && !session.Setting.AutoShardingForOrder {
@@ -361,7 +361,7 @@ func stepCartShow(session *sams.Session) error {
 			c = append(c, []byte(fmt.Sprintf("########## 发现超重订单，执行分包【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 			session.GoodsList = goodsListTmp
 			for index, v := range session.GoodsList {
-				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d\n", index, v.GoodsName, v.Quantity, v.Price/100, v.Price%100))...)
+				c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%s\n", index, v.GoodsName, v.Quantity, tools.SPrintMoney(v.Price)))...)
 			}
 			_ = session.DelCartGoodsInfo(delGoodsList)
 		}
@@ -369,7 +369,7 @@ func stepCartShow(session *sams.Session) error {
 		if len(session.GoodsListFuture) > 0 {
 			c = append(c, []byte(fmt.Sprintf("########## 分包下批次待购商品【%s】 ###########\n", time.Now().Format("15:04:05")))...)
 			for _, goods := range session.GoodsListFuture {
-				c = append(c, []byte(fmt.Sprintf("[~] %s 数量：%v 单价：%d.%d\n", goods.GoodsName, goods.Quantity, goods.Price/100, goods.Price%100))...)
+				c = append(c, []byte(fmt.Sprintf("[~] %s 数量：%v 单价：%s\n", goods.GoodsName, goods.Quantity, tools.SPrintMoney(goods.Price)))...)
 			}
 		}
 	}
@@ -416,9 +416,7 @@ func stepGoods(session *sams.Session) error {
 			return conf.GotoGoodsStep
 		}
 	} else {
-		couponFee := tools.StringToInt64(session.SettleInfo.CouponFee)
-		totalAmount := tools.StringToInt64(session.SettleInfo.TotalAmount)
-		c = append(c, []byte(fmt.Sprintf("[>] 校验商品成功\n[>] 优惠券抵扣：%d.%d, 最终总金额：%d.%d\n", couponFee/100, couponFee%100, totalAmount/100, totalAmount%100))...)
+		c = append(c, []byte(fmt.Sprintf("[>] 校验商品成功\n[>] 优惠券抵扣：%s, 最终总金额：%s\n", tools.SPrintMoneyStr(session.SettleInfo.CouponFee), tools.SPrintMoneyStr(session.SettleInfo.TotalAmount)))...)
 		session.DeliveryInfoVO = sams.DeliveryInfoVO{
 			StoreDeliveryTemplateId: session.SettleInfo.SettleDelivery.StoreDeliveryTemplateId,
 			DeliveryModeId:          session.SettleInfo.SettleDelivery.DeliveryModeIdList[0],
@@ -530,7 +528,7 @@ GetSupplyGoodsLoop:
 
 	for index, v := range goodsList {
 		if orderAlready[v.SpuId] {
-			c = append(c, []byte(fmt.Sprintf("[已添加此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle))...)
+			c = append(c, []byte(fmt.Sprintf("[已添加此商品] %s 数量：%v 单价：%s 详情：%s\n", v.Title, v.StockQuantity, tools.SPrintMoney(v.Price), v.SubTitle))...)
 			continue
 		}
 		if session.Setting.SupplySet.ParseSet.IsEnabled {
@@ -546,12 +544,12 @@ GetSupplyGoodsLoop:
 				}
 			}
 			if (session.Setting.SupplySet.ParseSet.Mode == 2 && isBlack) || (session.Setting.SupplySet.ParseSet.Mode == 1 && !isWhite) {
-				c = append(c, []byte(fmt.Sprintf("[已忽略此商品] %s 数量：%v 单价：%d.%d 详情：%s\n", v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle))...)
+				c = append(c, []byte(fmt.Sprintf("[已忽略此商品] %s 数量：%v 单价：%s 详情：%s\n", v.Title, v.StockQuantity, tools.SPrintMoney(v.Price), v.SubTitle))...)
 				continue
 			}
 		}
 
-		c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%d.%d 详情：%s\n", index, v.Title, v.StockQuantity, v.Price/100, v.Price%100, v.SubTitle))...)
+		c = append(c, []byte(fmt.Sprintf("[%v] %s 数量：%v 单价：%s 详情：%s\n", index, v.Title, v.StockQuantity, tools.SPrintMoney(v.Price), v.SubTitle))...)
 		if session.Setting.SupplySet.AddForce || v.StockQuantity > 0 {
 			validGoods = v
 			if session.Setting.SupplySet.AddForce {

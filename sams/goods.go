@@ -48,7 +48,7 @@ func (goods Goods) ToDelCartGoods() DelCartGoods {
 	return DelCartGoods{
 		SpuId:     goods.SpuId,
 		StoreId:   goods.StoreId,
-		Price:     fmt.Sprintf("%d.%d", goods.Price/100, goods.Price%100),
+		Price:     tools.SPrintMoney(goods.Price),
 		GoodsName: goods.GoodsName,
 	}
 }
@@ -201,7 +201,7 @@ func (session *Session) CheckGoods() error {
 		fmt.Printf("\n======== 以下商品已过期 ========\n")
 		for index, v := range result.Get("popUpInfo.goodsList").Array() {
 			_, goods := parseNormalGoods(v)
-			fmt.Printf("[%v] 商品名：%s 商品ID：%s 商店ID：%v 总价：%d.%d\n", index, goods.GoodsName, goods.SpuId, goods.StoreId, goods.Price/100, goods.Price%100)
+			fmt.Printf("[%v] 商品名：%s 商品ID：%s 商店ID：%v 总价：%s\n", index, goods.GoodsName, goods.SpuId, goods.StoreId, tools.SPrintMoney(goods.Price))
 		}
 		if session.Setting.IgnoreInvalid {
 			return nil

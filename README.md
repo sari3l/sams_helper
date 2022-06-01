@@ -3,6 +3,8 @@
 [![](https://img.shields.io/github/v/release/sari3l/sams_helper)](https://github.com/sari3l/sams_helper/releases)
 [![](https://img.shields.io/github/downloads/sari3l/sams_helper/total)](https://github.com/sari3l/sams_helper/releases)
 
+📢 6.1 上海解封，㊗️各位再也用不到此程序。
+
 <img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/sams_helper.png"/>
 
 借鉴自： https://github.com/robGoods/sams v1.0
@@ -53,19 +55,14 @@ deliveryType: 1
 1. `runUnlimited: true`永不停歇模式开启
    - 下单成功会回到购物车检查状态，如果没有设置提醒可能错过文字消息。
    - 保供商品已下单的套餐不会再次购买，在`保供抢购`下不建议程序持续开启超过一天。
-2. `runMode: 2` 即`保供自动抢单`模式，可以配置黑白名单进行筛选，具体内容在`config.yaml - supplySet`自行配置
-3. `bruteCapacity: true` 开启运力暴力模式 
+2. `bruteCapacity: true` 开启运力暴力模式 
    - 此模式下主要以尽力下单为目标，最终配送时间跨度可能较大
    - 暴力模式会通过`全城配`来下单，可能导致最终订单内取消部分`极速达`商品（具体可通过查看移动端购物车`全城配`即为最终订单商品列表）。
-4. 如果购物车里同时存在`极速达`、`全城配`商品，若`deliveryType = 2`，则会尝试通过全城配购买极速达货物（可能无货）。
-5. `ignoreInvalid` 忽略无效商品
+3. 如果购物车里同时存在`极速达`、`全城配`商品，若`deliveryType = 2`，则会尝试通过全城配购买极速达货物（可能无货）。
+4. `ignoreInvalid` 忽略无效商品
    - `true` 在检测有无效商品时自动剔除，继续提交订单（可能会因为金额减少增加运费）。
    - `false` 会一直检测等待至商品全部有效才会尝试提交订单。
-6. `autoFixPurchaseLimit` 限购数量自动修正
-   - `isEnabled: true` 开启修正
-   - `fixOffline: true` 线下购物车修正，单独开启只影响最后提交订单数量
-   - `fixOnline: true` 线上购物车修正，修正后会重新获取购物车信息
-7. `noticeType = 3` 即 `Mac Sound` 提醒，仅对 OSX 系统有效。
+5. `noticeType = 3` 即 `Mac Sound` 提醒，仅对 OSX 系统有效。
 
 ## 主要更新：
 
@@ -88,6 +85,12 @@ deliveryType: 1
 
 <img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/pic_1.jpeg" width="50%"/><br/>
 <img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/pic_2.png" width="50%"/><br/>
+
+## 支持
+
+此非商业盈利行为，完全自愿，请量力而行。
+
+<img src="https://raw.githubusercontent.com/sari3l/sams_helper/main/pics/sponsor.jpg" width="50%"/><br/>
 
 ## 声明
 
